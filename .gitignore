@@ -139,7 +139,7 @@ __pycache__/
 .env/
 /.env
 
-data/
-experiments/
-results/models/
-results/pre_models/
+data/*
+results/experiments/*
+results/models/*
+results/pre_models/*
