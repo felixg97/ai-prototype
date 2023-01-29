@@ -136,7 +136,10 @@ __pycache__/
 
 .DS_STORE
 
+.env/
+/.env
+
 data/
 experiments/
-models/
-pre_models/
+results/models/
+results/pre_models/
