@@ -127,10 +127,10 @@ class MobileNet_model():
         
         
         ## Train the pre-model
-        batch_size = 256
-        num_epochs = 75
+        batch_size = 8
+        num_epochs = 100
         
-        mini_batch = int(min(X_train.shape[0]/10, batch_size))
+        mini_batch = batch_size
         
         start_time = time.time()
         
@@ -161,10 +161,10 @@ class MobileNet_model():
         self.model.save(self.pre_trained_path + "_model_last.h5")
         print("Trained transferlearning model saved to: " + self.pre_trained_path)
         
-        if X_test is not None and y_test is not None:
-            y_pred = self.model.predict(X_test, y_test)
-            # save predictions
-            np.save(self.pre_trained_path + "_ypred.npy", y_pred)
+        # if X_test is not None and y_test is not None:
+        #     y_pred = self.model.predict(X_test, y_test)
+        #     # save predictions
+        #     np.save(self.pre_trained_path + "_ypred.npy", y_pred)
         
         keras.backend.clear_session()
             

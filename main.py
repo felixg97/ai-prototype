@@ -18,8 +18,8 @@ source_data_path = BASE_PATH + "data/source/"
 # Run specific constants, other to find in utils/constants.py
 ### Overall stuff
 RANDOM_STATE = 42
-TARGET_SIZE = (350, 350)
-INPUT_SHAPE = (350, 350, 3)
+TARGET_SIZE = (300, 300)
+INPUT_SHAPE = (300, 300, 3)
 
 ### Pre-model stuff
 BUILD_PREMODEL = True
@@ -35,6 +35,8 @@ def run_train_premodels_with_sourcedata():
     timestamp_string = time.gmtime(start)
     timestamp_string = time.strftime("%Y-%m-%d_%Hh-%Mm-%Ss", timestamp_string)
     
+    print("######################################")
+    print("######################################")
     print(f"### Training of pre-models startet at: {timestamp_string} ###")
     
     save_path = BASE_PATH + "results/pre_models/" + timestamp_string + "/"
@@ -45,7 +47,7 @@ def run_train_premodels_with_sourcedata():
     
     for dataset_name, img_format, num_classes in SOURCE_DATASETS:
         
-        print()
+        
         print(f"### Switching to dataset: {dataset_name} ###")
         
         X_train, y_train, X_test, y_test = None, None, None, None
@@ -58,8 +60,8 @@ def run_train_premodels_with_sourcedata():
                 random_state=RANDOM_STATE,
             )
 
-            X_train = X_train[:1] # TEST
-            y_train = y_train[:1] # TEST
+            # X_train = X_train[:1] # TEST
+            # y_train = y_train[:1] # TEST
     
     
         for premodel in TF_MODELS:
