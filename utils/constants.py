@@ -11,14 +11,14 @@ ITERATIONS = 5
 
 
 SOURCE_DATASETS = [
-    ("imagenet", None, None),
-    # ("caltech101", ".jpg", 101), # will be made after safe set is trained
-    ("miniimagenet", ".JPEG", 0), # crashed kernel TODO: test on workstation
-    ("dagm", ".PNG", 10)
+    # ("imagenet", None, None),
+    # ("dagm", ".PNG", 10, (512, 512)),
+    # ("caltech101", ".jpg", 101, (300, 297)), # will be made after safe set is trained
+    # ("miniimagenet", ".JPEG", 100, (500, 375)), # crashed kernel TODO: test on workstation
 ]
 
 TARGET_DATASETS = [
-    ("mechanicalseals_fulllight", ".png", 2),
+    ("mechanicalseals_fulllight", ".png", 2, (4000, 3000)),
 ]
 
 TF_MODELS = [

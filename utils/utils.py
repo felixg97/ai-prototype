@@ -1,10 +1,10 @@
 import glob
-import numpy as np
-
 import os
 import cv2
 
-from tensorflow.keras.applications.vgg16 import preprocess_input
+import numpy as np
+import tensorflow.keras as keras
+from tensorflow.keras.applications.vgg16 import preprocess_input # should be in the model itself
 
 from sklearn.model_selection import train_test_split
 
@@ -60,10 +60,46 @@ def load_local_dataset_from_tif(path, num_tif=4, target_size=(350, 350)):
         
     return np.array(X), np.array(y) 
 
+## read data from all files using tensorflow # GOTO
+def load_local_dataset_tf(
+    path,
+    test_size=None,
+    target_size=None,
+    batch_size=None,
+    seed=42,
+    subset=None,
+    colormode="rgb",
+    label_mode="categorical",
+    interpolation="area",
+    ):
 
-## read data from png files # GERADE
-def load_local_dataset(path, img_format, target_size=None, ignore_split=True):
+    # ausgelagert in utils, da area die/das beste interpolation/resampling ist
+    # is äquivalent zu Pillow Image.resize
+
+    data = keras.utils.image_dataset_from_directory(
+        path,
+        validation_split=test_size,
+        subset=subset,
+        seed=seed,
+        image_size=target_size,
+        batch_size=batch_size,
+        interpolation=interpolation,
+        color_mode=colormode,
+        label_mode=label_mode,
+    )
+    
+    return data
+
+
+## read data from png files # GOTO
+def load_local_dataset(
+    path, img_format, 
+    target_size=None, 
+    ignore_split=True, 
+    interpolation="inter_area",
+    ):
     X, y = [], []
+
     
     class_dictionary = {}
     class_idx = 0

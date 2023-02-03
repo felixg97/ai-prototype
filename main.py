@@ -57,9 +57,6 @@ def run_train_premodels_with_sourcedata():
                 target_size=TARGET_SIZE,
                 random_state=RANDOM_STATE,
             )
-
-            X_train = X_train[:1] # TEST
-            y_train = y_train[:1] # TEST
     
     
         for premodel in TF_MODELS:
