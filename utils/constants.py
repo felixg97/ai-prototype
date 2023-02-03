@@ -4,11 +4,10 @@
 Env
 
 """
-
-BASE_PATH = "/Users/felixgerschner/git/ai-prototype/"
+# BASE_PATH = "/Users/felixgerschner/git/ai-prototype/" # mac
+BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
 
 ITERATIONS = 5
-
 
 SOURCE_DATASETS = [
     # ("imagenet", None, None),
@@ -22,11 +21,11 @@ TARGET_DATASETS = [
 ]
 
 TF_MODELS = [
-    "VGG16", # suggested in paper
+    # "VGG16", # suggested in paper
     # "VGG19",
     # "ResNet50",
     # "ResNet50V2",
-    "ResNet101", # suggested in paper
+    # "ResNet101", # suggested in paper
     # "ResNet101V2",
     # "MobileNet", # suggested in paper
     # "MobileNetV2", 
