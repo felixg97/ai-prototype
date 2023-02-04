@@ -4,8 +4,8 @@
 Env
 
 """
-BASE_PATH = "/Users/felixgerschner/git/ai-prototype/" # mac
-# BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
+# BASE_PATH = "/Users/felixgerschner/git/ai-prototype/" # mac
+BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
 
 ITERATIONS = 5
 

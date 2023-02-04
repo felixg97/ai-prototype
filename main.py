@@ -14,14 +14,14 @@ from utils.constants import SOURCE_DATASETS
 from utils.constants import TF_MODELS
 
 source_data_path = BASE_PATH + "data/source/"
-target_data_path = BASE_PATH + "data/source/"
+target_data_path = BASE_PATH + "data/target/"
 
 VERBOSE = True
 
 # Run specific constants, other to find in utils/constants.py
 ### Overall stuff
 RANDOM_STATE = 42
-TARGET_SIZE = (300, 300)
+TARGET_SIZE = (224, 224)
 INPUT_SHAPE = (*TARGET_SIZE, 3)
 BATCH_SIZE = 64
 
@@ -32,7 +32,7 @@ BUILD_PREMODEL = True
 BUILD_MODEL = True
 
 ############ Test stuff ############
-TESTING = True
+TESTING = False
 ####################################
 
 
