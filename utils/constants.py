@@ -4,8 +4,8 @@
 Env
 
 """
-# BASE_PATH = "/Users/felixgerschner/git/ai-prototype/" # mac
-BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
+BASE_PATH = "/Users/felixgerschner/git/ai-prototype/" # mac
+# BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
 
 ITERATIONS = 5
 
@@ -21,7 +21,7 @@ TARGET_DATASETS = [
 ]
 
 TF_MODELS = [
-    "vg16", # suggested in paper
+    "vgg16", # suggested in paper
     # "vgg19",
     # "resnet50",
     # "resnet50V2",

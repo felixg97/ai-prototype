@@ -307,58 +307,47 @@ Evaluation utils
 """
 
 # If models do not significantly change between each other this function will be reduced TODO
-def create_premodel(model_name, dataset_name, input_shape, num_classes, path, build=True):
+def create_premodel(path, model_name, input_shape, dataset_name, num_classes, verbose=False):
     
-    _input_shape = None,
-    _path = BASE_PATH,
-    _build_pre_model = False, # source begin
-    _trainable_pre_model = False,
-    _source_data_name = None, 
-    _source_num_classes = None, # source end / target begin
-    verbose = False
-    
-    if model_name == 'VGG16':
+    if model_name == 'vgg16':
         from models.tf_models.VGG16_model import VGG16_model
         return VGG16_model(
-            input_shape = None,
-            path = BASE_PATH,
-            build_pre_model = False, # source begin
-            trainable_pre_model = False,
-            source_data_name = None, 
-            source_num_classes = None, # source end / target begin
-            build_top_model = False, 
-            target_input_shape = None,
-            target_data_name = None,
-            target_num_classes = None, 
-            k_shot = None, # target end
+            path = path,
+            input_shape = input_shape,
+            build_pre_model = True,
+            source_data_name = dataset_name, 
+            source_num_classes = num_classes,
             verbose = False
         )
-    elif model_name == 'ResNet101':
+    elif model_name == 'resnet101':
         from models.tf_models.ResNet101_model import ResNet101_model
         return ResNet101_model(
-            dataset_name,
-            input_shape=input_shape,
-            num_classes=num_classes,
-            build_pre_model=build,
-            path=path
+            path = path,
+            input_shape = input_shape,
+            build_pre_model = True,
+            source_data_name = dataset_name, 
+            source_num_classes = num_classes,
+            verbose = False
         )
-    elif model_name == 'MobileNet':
+    elif model_name == 'mobilenet':
         from models.tf_models.MobileNet_model import MobileNet_model
         return MobileNet_model(
-            dataset_name,
-            input_shape=input_shape,
-            num_classes=num_classes,
-            build_pre_model=build,
-            path=path
+            path = path,
+            input_shape = input_shape,
+            build_pre_model = True,
+            source_data_name = dataset_name, 
+            source_num_classes = num_classes,
+            verbose = False
         )
-    elif model_name == 'DenseNet121':
+    elif model_name == 'densenet121':
         from models.tf_models.DenseNet121_model import DenseNet121_model
         return DenseNet121_model(
-            dataset_name,
-            input_shape=input_shape,
-            num_classes=num_classes,
-            build_pre_model=build,
-            path=path
+            path = path,
+            input_shape = input_shape,
+            build_pre_model = True,
+            source_data_name = dataset_name, 
+            source_num_classes = num_classes,
+            verbose = False
         )
         
         
@@ -400,7 +389,12 @@ def plot_epochs_metric(hist, file_name, metric='loss'):
     
 def calculate_metrics(y_train, y_pred_train, y_test, y_pred_test, duration,):
     
-    res = pd.DataFrame(data=np.zeros((1, 4), dtype=np.float), index=[0],
+    # print("y_train: ", y_train.shape)
+    # print("y_pred_train: ", y_pred_train.shape)
+    # print("y_test: ", y_test.shape)
+    # print("y_pred_test: ", y_pred_test.shape)
+    
+    res = pd.DataFrame(data=np.zeros((1, 7), dtype=np.float), index=[0],
                     columns=['precision_train', 'accuracy_train', 'recall_train', 
                             'precision_test', 'accuracy_test', 'recall_test', 'duration'])
     

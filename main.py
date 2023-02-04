@@ -14,6 +14,9 @@ from utils.constants import SOURCE_DATASETS
 from utils.constants import TF_MODELS
 
 source_data_path = BASE_PATH + "data/source/"
+target_data_path = BASE_PATH + "data/source/"
+
+VERBOSE = True
 
 # Run specific constants, other to find in utils/constants.py
 ### Overall stuff
@@ -45,7 +48,7 @@ def run_train_premodels_with_sourcedata():
         os.makedirs(save_path)
         print("### Created directory: " + save_path + " ###")
     
-    for dataset_name, orig_img_format, num_classes in SOURCE_DATASETS:
+    for dataset_name, img_format, num_classes, orig_shape in SOURCE_DATASETS:
         
         print(f"### Switching to dataset: {dataset_name} ###")
         
@@ -56,28 +59,28 @@ def run_train_premodels_with_sourcedata():
         test_ds = load_local_dataset_tf(dataset_path, target_size=TARGET_SIZE, 
                                 subset="test", batch_size=32)
         
-        train_ds = train_ds.take(5)
-        test_ds = test_ds.take(5)
+        train_ds = train_ds.take(32)
+        test_ds = test_ds.take(32)
         
         for premodel in TF_MODELS:
             print(f"### Switching to pre-model: {premodel} ###")
             
-            model_save_path = save_path + premodel + "/" + dataset_name + "/"
+            model_save_path = save_path + premodel + "_" + dataset_name + "/"
             
             model = create_premodel(
-                premodel, 
-                dataset_name,
-                INPUT_SHAPE,
-                num_classes,
                 model_save_path,
-                build=BUILD_PREMODEL
+                premodel, 
+                INPUT_SHAPE,
+                dataset_name,
+                num_classes,
+                verbose = True
                 )
             
             print(f"### Pre-model {premodel} instantiated. ###")
             
             train_preprocessed = preprocess_data_per_tfmodel(train_ds, model_name=premodel)
             test_preprocessed = preprocess_data_per_tfmodel(test_ds, model_name=premodel)
-            model.fit_and_save_pre_model(train_preprocessed, test_preprocessed)
+            model.fit(train_preprocessed, test_preprocessed)
             
             print(f"### Pre-model {premodel} trained and saved ###")
     
@@ -88,6 +91,17 @@ def run_train_models_with_targetdata():
     timestamp_string = time.gmtime(start)
     timestamp_string = time.strftime("%Y-%m-%d_%Hh-%Mm-%Ss", timestamp_string)
 
+    print("######################################")
+    print("######################################")
+    print(f"### Training of full models startet at: {timestamp_string} ###")
+    
+    save_path_models = BASE_PATH + "results/models/" + timestamp_string + "/"
+    
+    if not os.path.exists(save_path_models):
+        os.makedirs(save_path_models)
+        print("### Created directory: " + save_path_models + " ###")
+        
+    
 
 
 if __name__ == '__main__':
