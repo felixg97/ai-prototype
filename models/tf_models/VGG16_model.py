@@ -239,16 +239,16 @@ class VGG16_model():
         y_test = np.argmax(np.concatenate([y for x, y in test_set], axis=0), axis=1)
         
         ## Train the pre-model
-        batch_size = 64
+        # batch_size = 64
         num_epochs = 100
         
-        mini_batch = batch_size
+        # mini_batch = batch_size
         
         start_time = time.time()
         
         hist = self.model.fit(
             trains_set,
-            batch_size=mini_batch,
+            # batch_size=mini_batch,
             epochs=num_epochs,
             validation_data=test_set,
             callbacks=self.callbacks,

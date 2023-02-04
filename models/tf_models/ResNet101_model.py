@@ -7,33 +7,9 @@ import time
 
 from keras.models import load_model
 from utils.constants import BASE_PATH
-
-
-
-import numpy as np
-import tensorflow as tf
-import tensorflow.keras as keras
-
-import time
-
-from keras.models import load_model
-from utils.constants import BASE_PATH
 from utils.utils import save_logs
 
-"""
-1. Use Case: Train a transfer learning model with source domain
 
-(1.1) Build model: Model name, weights, input shape
-(1.2) Train model: X_train, y_train
-(1.3) Evaluate model: X_test, y_test
-
-2. Use Case: Train the classification layer of the pretrained model with target domain
-
-(2.1) Build pretrained model: Model name, weights, input shape
-(2.2) Train classification layer: X_train, y_train
-(2.3) Evaluar
-
-"""
 
 class ResNet101_model():
     
@@ -250,16 +226,16 @@ class ResNet101_model():
         y_test = np.argmax(np.concatenate([y for x, y in test_set], axis=0), axis=1)
         
         ## Train the pre-model
-        batch_size = 64
+        # batch_size = 64
         num_epochs = 100
         
-        mini_batch = batch_size
+        # mini_batch = batch_size
         
         start_time = time.time()
         
         hist = self.model.fit(
             trains_set,
-            batch_size=mini_batch,
+            # batch_size=mini_batch,
             epochs=num_epochs,
             validation_data=test_set,
             callbacks=self.callbacks,

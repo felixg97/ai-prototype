@@ -4,8 +4,8 @@
 
 #### VGG16
 
-[] DAGM - Source train test
-[] Target train test
+[X] DAGM - Source train test
+[X] Target train test
 [] Classifiation test
 
 [] Adapt other transfer learning models

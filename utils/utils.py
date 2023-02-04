@@ -206,7 +206,7 @@ def preprocess_data_per_tfmodel(dataset, model_name="vgg16"):
         preprocessed = dataset.map(lambda x, y: (keras.applications.vgg16.preprocess_input(x), y))
     elif model_name == "resnet101":
         preprocessed = dataset.map(lambda x, y: (keras.applications.resnet50.preprocess_input(x), y))
-    elif model_name == "denseNet121":
+    elif model_name == "densenet121":
         preprocessed = dataset.map(lambda x, y: (keras.applications.densenet.preprocess_input(x), y))
     else:
         raise Exception("Model not found")

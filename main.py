@@ -21,14 +21,19 @@ VERBOSE = True
 # Run specific constants, other to find in utils/constants.py
 ### Overall stuff
 RANDOM_STATE = 42
-TARGET_SIZE = (224, 224)
+TARGET_SIZE = (300, 300)
 INPUT_SHAPE = (*TARGET_SIZE, 3)
+BATCH_SIZE = 64
 
 ### Pre-model stuff
 BUILD_PREMODEL = True
 
 ### Classification layer stuff
 BUILD_MODEL = True
+
+############ Test stuff ############
+TESTING = True
+####################################
 
 
 def run_train_premodels_with_sourcedata():
@@ -50,20 +55,25 @@ def run_train_premodels_with_sourcedata():
     
     for dataset_name, img_format, num_classes, orig_shape in SOURCE_DATASETS:
         
+        print("######################################")
         print(f"### Switching to dataset: {dataset_name} ###")
+        print("######################################")
         
         dataset_path = source_data_path + dataset_name + "/"
         
         train_ds = load_local_dataset_tf(dataset_path, target_size=TARGET_SIZE, 
-                                subset="training", batch_size=32)
+                                subset="training", batch_size=BATCH_SIZE)
         test_ds = load_local_dataset_tf(dataset_path, target_size=TARGET_SIZE, 
-                                subset="test", batch_size=32)
+                                subset="test", batch_size=BATCH_SIZE)
         
-        train_ds = train_ds.take(32)
-        test_ds = test_ds.take(32)
+        if TESTING:
+            train_ds = train_ds.take(5)
+            test_ds = test_ds.take(5)
         
         for premodel in TF_MODELS:
+            print("######################################")
             print(f"### Switching to pre-model: {premodel} ###")
+            print("######################################")
             
             model_save_path = save_path + premodel + "_" + dataset_name + "/"
             
@@ -77,11 +87,13 @@ def run_train_premodels_with_sourcedata():
                 )
             
             print(f"### Pre-model {premodel} instantiated. ###")
+            print("######################################")
             
             train_preprocessed = preprocess_data_per_tfmodel(train_ds, model_name=premodel)
             test_preprocessed = preprocess_data_per_tfmodel(test_ds, model_name=premodel)
             model.fit(train_preprocessed, test_preprocessed)
             
+            print("######################################")
             print(f"### Pre-model {premodel} trained and saved ###")
     
 
