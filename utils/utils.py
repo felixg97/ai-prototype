@@ -3,12 +3,21 @@ import os
 import cv2
 
 import numpy as np
+import pandas as pd
+import tensorflow.data as tfdata
+import matplotlib.pyplot as plt
+
 import tensorflow.keras as keras
 from tensorflow.keras.applications.vgg16 import preprocess_input # should be in the model itself
 
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
 
 from PIL import Image, ImageSequence, ImageDraw
+
+from utils.constants import BASE_PATH
 
 """
 Dataset utils
@@ -59,36 +68,6 @@ def load_local_dataset_from_tif(path, num_tif=4, target_size=(350, 350)):
             y.append(label)
         
     return np.array(X), np.array(y) 
-
-## read data from all files using tensorflow # GOTO
-def load_local_dataset_tf(
-    path,
-    test_size=None,
-    target_size=None,
-    batch_size=None,
-    seed=42,
-    subset=None,
-    colormode="rgb",
-    label_mode="categorical",
-    interpolation="area",
-    ):
-
-    # ausgelagert in utils, da area die/das beste interpolation/resampling ist
-    # is äquivalent zu Pillow Image.resize
-
-    data = keras.utils.image_dataset_from_directory(
-        path,
-        validation_split=test_size,
-        subset=subset,
-        seed=seed,
-        image_size=target_size,
-        batch_size=batch_size,
-        interpolation=interpolation,
-        color_mode=colormode,
-        label_mode=label_mode,
-    )
-    
-    return data
 
 
 ## read data from png files # GOTO
@@ -156,6 +135,83 @@ def load_local_dataset(
     print(f"Dataset loaded: {X.shape[0]} images, {class_idx} classes (shape: {X.shape})")
     return X, y 
 
+
+## read data from all files using tensorflow # GOTO
+def load_local_dataset_tf(
+    path,
+    test_size=.2,
+    target_size=None,
+    batch_size=None,
+    seed=42,
+    subset=None,
+    colormode="rgb",
+    label_mode="categorical",
+    interpolation="area",
+    ):
+
+    # ausgelagert in utils, da area die/das beste interpolation/resampling ist
+    # is äquivalent zu Pillow Image.resize
+    data = None
+    
+    if subset == "training":
+        data = keras.utils.image_dataset_from_directory(
+            path,
+            validation_split=test_size,
+            subset="training",
+            seed=seed,
+            image_size=target_size,
+            batch_size=batch_size,
+            interpolation=interpolation,
+            color_mode=colormode,
+            label_mode=label_mode,
+        )
+    elif subset == "test":
+        data = keras.utils.image_dataset_from_directory(
+            path,
+            validation_split=test_size,
+            subset="validation",
+            seed=seed,
+            image_size=target_size,
+            batch_size=batch_size,
+            interpolation=interpolation,
+            color_mode=colormode,
+            label_mode=label_mode,
+        )
+    else:
+        data = keras.utils.image_dataset_from_directory(
+            path,
+            validation_split=test_size,
+            subset=subset,
+            seed=seed,
+            image_size=target_size,
+            batch_size=batch_size,
+            interpolation=interpolation,
+            color_mode=colormode,
+            label_mode=label_mode,
+        )
+    
+    return data
+
+
+## preprocess data
+def preprocess_data_per_tfmodel(dataset, model_name="vgg16"):
+    
+    preprocessed = dataset
+    
+    # tune performance of tf.data.Dataset 
+    AUTOTUNE = tfdata.experimental.AUTOTUNE
+    preprocessed = preprocessed.cache().prefetch(buffer_size=AUTOTUNE)    
+    
+    if model_name == "vgg16":
+        preprocessed = dataset.map(lambda x, y: (keras.applications.vgg16.preprocess_input(x), y))
+    elif model_name == "resnet101":
+        preprocessed = dataset.map(lambda x, y: (keras.applications.resnet50.preprocess_input(x), y))
+    elif model_name == "denseNet121":
+        preprocessed = dataset.map(lambda x, y: (keras.applications.densenet.preprocess_input(x), y))
+    else:
+        raise Exception("Model not found")
+    
+    return preprocessed
 
 
 # Helper function to preload images from directory
@@ -252,14 +308,30 @@ Evaluation utils
 
 # If models do not significantly change between each other this function will be reduced TODO
 def create_premodel(model_name, dataset_name, input_shape, num_classes, path, build=True):
+    
+    _input_shape = None,
+    _path = BASE_PATH,
+    _build_pre_model = False, # source begin
+    _trainable_pre_model = False,
+    _source_data_name = None, 
+    _source_num_classes = None, # source end / target begin
+    verbose = False
+    
     if model_name == 'VGG16':
         from models.tf_models.VGG16_model import VGG16_model
         return VGG16_model(
-            dataset_name,
-            input_shape=input_shape,
-            num_classes=num_classes,
-            build_pre_model=build,
-            path=path
+            input_shape = None,
+            path = BASE_PATH,
+            build_pre_model = False, # source begin
+            trainable_pre_model = False,
+            source_data_name = None, 
+            source_num_classes = None, # source end / target begin
+            build_top_model = False, 
+            target_input_shape = None,
+            target_data_name = None,
+            target_num_classes = None, 
+            k_shot = None, # target end
+            verbose = False
         )
     elif model_name == 'ResNet101':
         from models.tf_models.ResNet101_model import ResNet101_model
@@ -288,3 +360,56 @@ def create_premodel(model_name, dataset_name, input_shape, num_classes, path, bu
             build_pre_model=build,
             path=path
         )
+        
+        
+def save_logs(path, hist, y_train, y_pred_train, y_test, y_pred_test, duration,):
+    
+    hist_df = pd.DataFrame(hist.history)
+    hist_df.to_csv(path + '_history.csv', index=False)
+    
+    df_metrics = calculate_metrics(y_train, y_pred_train, y_test, y_pred_test, duration,)
+    df_metrics.to_csv(path + '_metrics.csv', index=False)
+    
+    index_best_model = hist_df['loss'].idxmin()
+    row_best_model = hist_df.loc[index_best_model]
+    
+    df_best_model = pd.DataFrame(data=np.zeros((1, 6), dtype=np.float), index=[0],
+        columns=['best_model_train_loss', 'best_model_val_loss', 'best_model_train_acc',
+            'best_model_val_acc', 'best_model_learning_rate', 'best_model_nb_epoch'])
+    
+    df_best_model['best_model_train_loss'] = row_best_model['loss']
+    df_best_model['best_model_val_loss'] = row_best_model['val_loss']
+    df_best_model['best_model_train_acc'] = row_best_model['accuracy']
+    df_best_model['best_model_val_acc'] = row_best_model['val_accuracy']
+
+    df_best_model.to_csv(path + '_best_model.csv', index=False)
+    plot_epochs_metric(hist, path + '_epochs_loss.png', metric='loss')
+
+
+def plot_epochs_metric(hist, file_name, metric='loss'):
+    plt.figure()
+    plt.plot(hist.history[metric])
+    plt.plot(hist.history['val_' + metric])
+    plt.title('model ' + metric)
+    plt.ylabel(metric, fontsize='large')
+    plt.xlabel('epoch', fontsize='large')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig(file_name, bbox_inches='tight')
+    plt.close()
+    
+    
+def calculate_metrics(y_train, y_pred_train, y_test, y_pred_test, duration,):
+    
+    res = pd.DataFrame(data=np.zeros((1, 4), dtype=np.float), index=[0],
+                    columns=['precision_train', 'accuracy_train', 'recall_train', 
+                            'precision_test', 'accuracy_test', 'recall_test', 'duration'])
+    
+    res['precision_train'] = precision_score(y_train, y_pred_train, average='macro')
+    res['accuracy_train'] = accuracy_score(y_train, y_pred_train)
+    res['recall_train'] = recall_score(y_train, y_pred_train, average='macro')
+    res['precision_test'] = precision_score(y_test, y_pred_test, average='macro')
+    res['accuracy_test'] = accuracy_score(y_test, y_pred_test)
+    res['recall_test'] = recall_score(y_test, y_pred_test, average='macro')
+    res['duration'] = duration
+    
+    return res

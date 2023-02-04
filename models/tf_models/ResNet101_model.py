@@ -111,10 +111,8 @@ class ResNet101_model():
             
     
     def fit_and_save_pre_model(self, 
-            X_train, 
-            y_train,
-            X_test=None, 
-            y_test=None
+            trains_set,
+            test_set=None,
         ):
         
         if not tf.test.is_gpu_available:
@@ -124,7 +122,6 @@ class ResNet101_model():
             self.model.save_weights(self.pre_trained_path + "_last_init.h5")
             print("Pretrained model saved to: " + self.pre_trained_path)
             return
-        
         
         ## Train the pre-model
         batch_size = 8
@@ -136,20 +133,18 @@ class ResNet101_model():
         
         hist = None
         
-        if X_test is not None and y_test is not None:
+        if test_set is not None:
             hist = self.model.fit(
-                X_train,
-                y_train,
+                trains_set,
                 batch_size=mini_batch,
                 epochs=num_epochs,
-                validation_data=(X_test, y_test),
+                validation_data=test_set,
                 callbacks=self.callbacks,
                 verbose=self.verbose,
             )
         else:
             hist = self.model.fit(
-                X_train,
-                y_train,
+                trains_set,
                 batch_size=mini_batch,
                 epochs=num_epochs,
                 callbacks=self.callbacks,
@@ -168,7 +163,11 @@ class ResNet101_model():
         
         keras.backend.clear_session()
             
-            
+
+##################
+### Not finished
+##################
+
     def build_model(self):
 
         if self.source_data_name == "imagenet":

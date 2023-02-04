@@ -7,6 +7,7 @@ import time
 
 from keras.models import load_model
 from utils.constants import BASE_PATH
+from utils.utils import save_logs
 
 """
 1. Use Case: Train a transfer learning model with source domain
@@ -25,68 +26,75 @@ from utils.constants import BASE_PATH
 
 class VGG16_model():
     
-    def __init__(self, source_data_name, 
+    def __init__(self, 
                 input_shape = None,
-                target_data_name = None,
-                num_classes = None,
                 path = BASE_PATH,
-                build_pre_model = False, 
-                build_model = False, 
+                build_pre_model = False, # source begin
+                trainable_pre_model = False,
+                source_data_name = None, 
+                source_num_classes = None, # source end / target begin
+                build_top_model = False, 
+                target_input_shape = None,
+                target_data_name = None,
+                target_num_classes = None, 
+                k_shot = None, # target end
                 verbose = False
             ):
         
-        self.model_name = "VGG16"
-        self.input_shape = input_shape
-        self.source_data_name = source_data_name
-        self.target_data_name = target_data_name
-        self.num_classes = num_classes
+        self.model_name = "vgg16"
         self.verbose = verbose
-        self.ouput_path = path
         
         self.model = None
+        self.input_shape = input_shape
+        self.cross_entropy = "categorical_crossentropy"
         
-        self.cross_entropy = None
-        if num_classes is not None:
-            self.cross_entropy = \
-                ("categorical_crossentropy" if num_classes > 2 else "binary_crossentropy")
-        
-        self.pre_trained_path = path + self.model_name + "_" \
+        ## source stuff
+        self.build_pre_model_flag = build_pre_model
+        self.trainable_pre_model_flag = trainable_pre_model
+        self.source_data_name = source_data_name
+        self.source_num_classes = source_num_classes
+        self.pre_model_file_name = self.model_name + "_" \
             + self.source_data_name
+        self.pre_trained_pre_model_path = path + self.pre_model_file_name
             
+        ## target stuff
+        self.build_top_model_flag = build_top_model
+        self.target_data_name = target_data_name
+        self.target_num_classes = target_num_classes
+        self.top_model_file_name = self.model_name + "_" \
+            + self.source_data_name + "_" + self.target_data_name + "_" + str(k_shot)
+        self.top_trained_pre_model_path = path + self.top_model_file_name
+
+
         if build_pre_model == True:
             self.build_pre_model()
-            if verbose: self.model.summary()
+            if verbose: 
+                self.model.summary()
             return 
         else:
-            self.model = load_model(self.pre_trained_path + "_model_init.h5")
-        
-
-        ## Ab hier will ich ein ready model haben
-        ## Build würde sich jetzt auf das trained layer beziehen
-        ## KOMMT SPÄTER: eins nach dem anderen
-        # if target_data_name is None:
-        #     return
-        
-        # if build_model == True:
-        #     self.build_model()
-        #     if verbose: self.mode.summary()
-        #     self.model.save_weights(self.output_path + "model_init.hdf5")
-        # else: 
-        #     self.weights_path = path + "results/models/" + self.model_name + "_" \
-        #         + self.source_data_name + "_model_init.h5"
-        #     self.model = load_model(self.weights_path)
+            weights_path = self.top_trained_pre_model_path + self.top_model_file_name
+            self.model = load_model(weights_path + "_model_best.h5")
+            
+            
+        if build_top_model == True:
+            self.build_top_model()
+            if verbose: 
+                self.model.summary()
+        else: 
+            weights_path = self.top_trained_pre_model_path + self.top_model_file_name
+            self.model = load_model(weights_path + "_model_best.h5")
         
     
     def build_pre_model(self):
         self.model = None # TF model
         
         if self.source_data_name == "imagenet":
+            
             self.model = keras.applications.VGG16(
                 input_shape=self.input_shape,
                 weights="imagenet",
                 include_top=False
             )
-            return
         
         self.model = keras.applications.VGG16(
             weights=None,
@@ -95,7 +103,8 @@ class VGG16_model():
             include_top=True
         )
         
-        optimizer = keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9)
+        # Usa RMSprop optimizer w/ lr=1e-4 
+        optimizer = keras.optimizers.RMSprop(learning_rate=1e-4)
         
         self.model.compile(
             loss=self.cross_entropy,
@@ -103,9 +112,11 @@ class VGG16_model():
             metrics=['accuracy']
         )
         
-        reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=200, min_lr=0.1)
-
-        file_path = self.pre_trained_path + "_model_best.h5"
+        # reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', 
+        #     factor=0.5, patience=200, min_lr=0.1)
+        
+        file_path = self.pre_trained_pre_model_path + \
+            self.pre_model_file_name + "_model_best.h5"
 
         model_checkpoint = keras.callbacks.ModelCheckpoint(
             filepath=file_path, 
@@ -113,93 +124,36 @@ class VGG16_model():
             save_best_only=True
         )
 
-        self.callbacks = [reduce_lr,model_checkpoint]
-        
+        self.callbacks = [
+            # reduce_lr, 
+            model_checkpoint
+        ]
         
         if self.verbose == True:
-            print("test")
-
             # Show model summary
             self.model.summary()
             
-    
-    def fit_and_save_pre_model(self, 
-            X_train, 
-            y_train,
-            X_test=None, 
-            y_test=None
-        ):
-        
-        if not tf.test.is_gpu_available:
-            print('No GPU was detected. CNNs can be very slow without a GPU.')
-        
-        if self.source_data_name == "imagenet":
-            self.model.save_weights(self.pre_trained_path + "_last_init.h5")
-            print("Pretrained model saved to: " + self.pre_trained_path)
-            return
-        
-        
-        ## Train the pre-model
-        batch_size = 8
-        num_epochs = 100
-        
-        mini_batch = batch_size
-        
-        start_time = time.time()
-        
-        hist = None
-        
-        if X_test is not None and y_test is not None:
-            hist = self.model.fit(
-                X_train,
-                y_train,
-                batch_size=mini_batch,
-                epochs=num_epochs,
-                validation_data=(X_test, y_test),
-                callbacks=self.callbacks,
-                verbose=self.verbose,
-            )
-        else:
-            hist = self.model.fit(
-                X_train,
-                y_train,
-                batch_size=mini_batch,
-                epochs=num_epochs,
-                callbacks=self.callbacks,
-                verbose=self.verbose,
-            )
-        
-        duration = time.time() - start_time
-        
-        self.model.save(self.pre_trained_path + "_model_last.h5")
-        print("Trained transferlearning model saved to: " + self.pre_trained_path)
-        
-        # if X_test is not None and y_test is not None:
-        #     y_pred = self.model.predict(X_test, y_test)
-        #     # save predictions
-        #     np.save(self.pre_trained_path + "_ypred.npy", y_pred)
-        
-        keras.backend.clear_session()
             
-            
-    def build_model(self):
+    def build_top_model(self):
+        
+        # load pretrained model - loaded
+        if self.build_pre_model_flag is False:
+            raise Exception("You must set buil pre model to true")
 
-        if self.source_data_name == "imagenet":
-            pass
+        if self.trainable_pre_model_flag is False:
+            # freeze all layers
+            for layer in self.model.layers:
+                layer.trainable = False
         
-        # do if not imagenet
-        
-        if self.source_data_name != "imagenet":
-            # freeze all layers except last three (or four?)
-            # deactivate last three layers and add custom layers
-            pass
         
         # Classification block
         x = None
+        
         if self.source_data_name == "imagenet":
             x = self.model.layers[-1].ouput 
         else:
             x = self.model.layers[-4].output # test if it is the right layer TODO:
+            
         x = keras.layers.Flatten(name="flatten")(x)
         x = keras.layers.Dense(32, activation="relu", name="fc1")(x)
         x = keras.layers.Dense(32, activation="relu", name="fc2")(x)
@@ -208,7 +162,7 @@ class VGG16_model():
             self.num_classes, activation="softmax", name="predictions")(x)
         
         self.model = keras.models.Model(
-            input=+self.model.input, 
+            input=self.model.input, 
             outputs=output_layer)
         
         # Usa RMSprop optimizer
@@ -221,9 +175,11 @@ class VGG16_model():
             metrics=['accuracy']
         )
         
-        reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=200, min_lr=0.1)
+        # reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', 
+        #     factor=0.5, patience=200, min_lr=0.1)
 
-        file_path = self.pre_trained_path + "_model_best.h5"
+        file_path = self.top_trained_pre_model_path + \
+            self.top_model_file_name + "_model_best.h5"
 
         model_checkpoint = keras.callbacks.ModelCheckpoint(
             filepath=file_path, 
@@ -231,57 +187,90 @@ class VGG16_model():
             save_best_only=True
         )
 
-        self.callbacks = [reduce_lr,model_checkpoint]
+        self.callbacks = [
+            # reduce_lr, 
+            model_checkpoint
+        ]
         
         if self.verbose == True:
             # Show model summary
             self.model.summary()
 
+
+    def fit(self, trains_set, test_set):
         
-    def fit_model(self, X_train, y_train, X_test=None, y_test=None):
         if not tf.test.is_gpu_available:
             print('No GPU was detected. CNNs can be very slow without a GPU.')
-            
-        num_epochs = 50
-        self.channels = 1
+        
+        
+        save_path = None
+        model_file_name = None
+        
+        if self.build_pre_model_flag is True and self.build_top_model_flag is False:
+            save_path = self.pre_trained_pre_model_path
+            model_file_name = self.pre_model_file_name
+        elif self.build_pre_model_flag is True and self.build_top_model_flag is True:
+            save_path = self.top_trained_pre_model_path
+            model_file_name = self.top_model_file_name
+        
+        
+        if self.source_data_name == "imagenet":
+            self.model.save_weights(save_path + model_file_name + "_last_init.h5")
+            print("Pretrained model saved to: " + save_path)
+            return
+        
+        
+        y_train = np.concatenate([y for x, y in trains_set], axis=0)
+        y_test = np.concatenate([y for x, y in test_set], axis=0)
+        
+        ## Train the pre-model
+        batch_size = 64
+        num_epochs = 5
+        
+        mini_batch = batch_size
         
         start_time = time.time()
         
-        hist = None
+        hist = self.model.fit(
+            trains_set,
+            batch_size=mini_batch,
+            epochs=num_epochs,
+            validation_data=test_set,
+            callbacks=self.callbacks,
+            verbose=self.verbose,
+        )
         
-        if X_test is not None and y_test is not None:
-            hist = self.model.fit(
-                X_train,
-                y_train,
-                epochs=num_epochs,
-                validation_data=(X_test, y_test),
-                callbacks=self.callbacks,
-                verbose=self.verbose,
-            )
-        else:
-            hist = self.model.fit(
-                X_train,
-                y_train,
-                epochs=num_epochs,
-                callbacks=self.callbacks,
-                verbose=self.verbose,
-            )
-            
         duration = time.time() - start_time
         
-        self.model.save(self.pre_trained_path + "_model_last.h5")
-        print("Trained transferlearning model saved to: " + self.pre_trained_path)
+        self.model.save(save_path + model_file_name + "_model_last.h5")
+        print("Trained transferlearning model saved to: " + save_path)
+
+        y_pred_train = self.predict(trains_set)
+        y_pred_test = self.predict(test_set)
         
-        if X_test is not None and y_test is not None:
-            y_pred = self.model.predict(X_test, y_test)
-            # save predictions
-            np.save(self.pre_trained_path + "_ypred.npy", y_pred)
+        # save predictions
+        np.save(save_path + '_y_pred.npy', y_pred)
+
+        # convert the predicted from binary to integer
+        y_pred = np.argmax(y_pred, axis=1)
         
+        save_logs(save_path+model_file_name, hist, y_train, y_pred_train, y_test, 
+            y_pred_test, duration)
+
         keras.backend.clear_session()
         
 
-    def predict(self):
-        pass
+    def predict(self, dataset):
+        input = None
+        
+        if len(dataset.shape) == 3:
+            input = np.expand_dims(dataset, axis=0)
+        else:
+            input = dataset
+        
+        pred = self.model.predict(input)
+        return pred
+    
 
         
         
