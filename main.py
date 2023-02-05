@@ -126,11 +126,10 @@ def run_train_models_with_targetdata():
     print("######################################")
     print(f"### Training of full models startet at: {timestamp_string} ###")
     
-    save_path_models = BASE_PATH + "results/models/" + timestamp_string + "/"
     
-    if not os.path.exists(save_path_models):
-        os.makedirs(save_path_models)
-        print("### Created directory: " + save_path_models + " ###")
+    # if not os.path.exists(save_path_models):
+    #     os.makedirs(save_path_models)
+    #     print("### Created directory: " + save_path_models + " ###")
         
 
     for dataset_name, img_format, num_classes, orig_shape in SOURCE_DATASETS:
@@ -139,18 +138,31 @@ def run_train_models_with_targetdata():
         print(f"### Switching to dataset: {dataset_name} ###")
         print("######################################")
         
-        # dataset_path = target_data_path + dataset_name + "/"
+        for premodel in TF_MODELS:
+            print("######################################")
+            print(f"### Switching to pre-model: {premodel} ###")
+            print("######################################")
+            
+            # create full model
+            # model = create_full_model()
+            
+            print(f"### Pre-model {premodel} instantiated. ###")
+            print("######################################")
+            
+            # create dataframe
         
-        # print()
-        # print(dataset_path)
-        # print()
-        
-        for index in range(TARGET_ITERATIONS):
-            pass
-        
-            for k in range(K_MAX):
+            for iteration in range(TARGET_ITERATIONS):
                 pass
-        
+            
+                # load data set 
+                # RANDOM_STATE + iteration 
+            
+                for k in range(K_MAX):
+                    pass
+                
+                    # tain and test model
+
+                    # return metrics, metrics_best
         
 
 
