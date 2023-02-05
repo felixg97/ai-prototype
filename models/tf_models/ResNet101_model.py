@@ -1,3 +1,5 @@
+import os
+
 
 import numpy as np
 import tensorflow as tf
@@ -41,7 +43,10 @@ class ResNet101_model():
         self.source_num_classes = source_num_classes
         self.pre_model_file_name = self.model_name + "_" \
             + self.source_data_name
-        self.pre_trained_pre_model_path = path + self.pre_model_file_name
+        self.pre_trained_pre_model_path = path + self.pre_model_file_name + "/"
+
+        if not os.path.exists(self.pre_trained_pre_model_path):
+            os.makedirs(self.pre_trained_pre_model_path)
         
         ## target stuff
         self.build_top_model_flag = build_top_model
@@ -82,6 +87,7 @@ class ResNet101_model():
                 weights="imagenet",
                 include_top=False
             )
+            return
         
         self.model = keras.applications.resnet.ResNet101(
             weights=None,
@@ -227,7 +233,7 @@ class ResNet101_model():
         
         ## Train the pre-model
         # batch_size = 64
-        num_epochs = 100
+        num_epochs = 50
         
         # mini_batch = batch_size
         

@@ -350,6 +350,61 @@ def create_premodel(path, model_name, input_shape, dataset_name, num_classes, ve
             verbose = verbose
         )
         
+def create_full_model(path, model_name, input_shape, source_dataset_name, 
+    target_dataset_name, num_classes, k_shot, verbose=False):
+    
+    if model_name == 'vgg16':
+        from models.tf_models.VGG16_model import VGG16_model
+        return VGG16_model(
+            path = path,
+            input_shape = input_shape,
+            build_pre_model = False,
+            source_data_name = source_dataset_name,
+            build_top_model=True,
+            target_data_name = target_dataset_name,
+            target_num_classes = num_classes,
+            k_shot=k_shot,
+            verbose = verbose
+        )
+    elif model_name == 'resnet101':
+        from models.tf_models.ResNet101_model import ResNet101_model
+        return ResNet101_model(
+            path = path,
+            input_shape = input_shape,
+            build_pre_model = False,
+            source_data_name = source_dataset_name,
+            build_top_model=True,
+            target_data_name = target_dataset_name,
+            target_num_classes = num_classes,
+            k_shot=k_shot,
+            verbose = verbose
+        )
+    elif model_name == 'mobilenet':
+        from models.tf_models.MobileNet_model import MobileNet_model
+        return MobileNet_model(
+            path = path,
+            input_shape = input_shape,
+            build_pre_model = False,
+            source_data_name = source_dataset_name,
+            build_top_model=True,
+            target_data_name = target_dataset_name,
+            target_num_classes = num_classes,
+            k_shot=k_shot,
+            verbose = verbose
+        )
+    elif model_name == 'densenet121':
+        from models.tf_models.DenseNet121_model import DenseNet121_model
+        return DenseNet121_model(
+            path = path,
+            input_shape = input_shape,
+            build_pre_model = False,
+            source_data_name = source_dataset_name,
+            build_top_model=True,
+            target_data_name = target_dataset_name,
+            target_num_classes = num_classes,
+            k_shot=k_shot,
+            verbose = verbose
+        )
         
 def save_logs(path, hist, y_train, y_pred_train, y_test, y_pred_test, duration, save=True):
     
