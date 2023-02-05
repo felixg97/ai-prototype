@@ -31,11 +31,11 @@ BUILD_PREMODEL = True
 
 ### Classification layer stuff
 BUILD_MODEL = True
-TARGET_ITERATIONS = 2 # TODO: Reset from TEST
-K_MAX = 2 # TODO: Reset from TEST 
+TARGET_ITERATIONS = 1 # TODO: Reset from TEST -> 2
+K_MAX = 5 # TODO: Reset from TEST -> 2 
 
 ############ Test stuff ############
-TESTING = True
+TESTING = False
 ####################################
 
 
@@ -96,7 +96,7 @@ def run_train_premodels_with_sourcedata():
                 INPUT_SHAPE,
                 dataset_name,
                 num_classes,
-                verbose = False
+                verbose = True
                 )
             
             print(f"### Pre-model {premodel} instantiated. ###")
@@ -166,11 +166,7 @@ def run_train_models_with_targetdata():
                 
                 # path to pre trained models
                 model_source_weights_path = weights_path 
-                
-                print("model_source_weights_path: " + model_source_weights_path)
-                print()
-                print()
-                print()
+
                 
                 for iteration in range(TARGET_ITERATIONS):
                     
@@ -214,15 +210,22 @@ def run_train_models_with_targetdata():
                         
                         if k_shot == 0:
                             continue
-                        
-                        # reducing train to k_shot
-                        train_preprocessed = train_preprocessed.take(k_shot)
-                        test_preprocessed = test_preprocessed.take(test_size)
-                
-                        
                         print("######################################")
                         print(f"### Switching to k_shot: {k_shot} ###")
                         print("######################################")
+                        
+                        # reducing train to k_shot
+                        k_shot_train_preprocessed = train_preprocessed.take(k_shot)
+                        k_shot_test_preprocessed = test_preprocessed.take(test_size)
+                        
+                        print(f"IT IS {k_shot} SHOOTING")
+                        print(type(k_shot))
+                        print(k_shot_train_preprocessed.cardinality().numpy())
+                        print()
+                        print(f"And test size: {test_size}")
+                        print()
+                
+                        
                         
                         # create model save path
                         k_shot_model_save_path = model_source_weights_path + \
@@ -247,17 +250,19 @@ def run_train_models_with_targetdata():
                             k_shot,
                             iteration,
                             pre_model_weights_path,
-                            verbose=False # TODO: Reset from TEST
+                            verbose=False # TODO: Reset from TEST -> False
                         )
                     
                         # tain and test model
                         df_metrics, df_metrics_best_model = model.fit(
-                            train_preprocessed,
-                            test_preprocessed
+                            k_shot_train_preprocessed,
+                            k_shot_test_preprocessed
                         )
                     
                         # return metrics, metrics_best
                         experimental_results.append(df_metrics_best_model.to_numpy()[0])
+                        
+                        del k_shot_train_preprocessed, k_shot_test_preprocessed
                     
                 
                     # save experimental results

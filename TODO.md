@@ -20,3 +20,5 @@
     - save metrics data fram per model and dataset w/ k rows
 [] Run experiments for DAGM
 [] Run experiments on caltech101 and miniimagenet dataset
+
+[] Early stopping rausmachen für allerletzten run

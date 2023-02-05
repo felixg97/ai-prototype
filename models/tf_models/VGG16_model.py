@@ -79,7 +79,7 @@ class VGG16_model():
                 "/" + self.pre_model_file_name
                 
             if self.source_data_name != "imagenet":
-                self.model = load_model(weights_path + "_model_best.h5")
+                self.model = load_model(weights_path + "_model_best.h5", compile=False)
         
         ## down here bc of sequential processing 
         self.top_model_file_name = "it_" + str(iteration) + "_" + self.model_name + \
@@ -173,7 +173,8 @@ class VGG16_model():
         # Classification block
         x = None
         
-        self.model.summary()
+        if False:
+            self.model.summary()
         
         if self.source_data_name == "imagenet":
             x = self.model.layers[-1].output 
@@ -191,7 +192,8 @@ class VGG16_model():
             inputs=self.model.input, 
             outputs=output_layer)
         
-        self.model.summary()
+        if self.verbose:
+            self.model.summary()
         
         # Usa RMSprop optimizer
         optimizer = keras.optimizers.RMSprop(learning_rate=1e-5)
@@ -223,7 +225,7 @@ class VGG16_model():
         self.callbacks = [
             # reduce_lr, 
             model_checkpoint,
-            early_stopping,
+            # early_stopping,
         ]
         
         if self.verbose == True:
@@ -264,10 +266,15 @@ class VGG16_model():
         # batch_size = 64
         num_epochs = 50
         
-        print()
-        print("save_path: ", save_path)
-        print("model_file_name: ", model_file_name)
-        print()
+        if self.build_pre_model_flag is True and self.build_top_model_flag is False:
+            num_epochs = 100
+        elif self.build_pre_model_flag is False and self.build_top_model_flag is True:
+            num_epochs = 50
+        
+        # print()
+        # print("save_path: ", save_path)
+        # print("model_file_name: ", model_file_name)
+        # print()
         
         start_time = time.time()
         
