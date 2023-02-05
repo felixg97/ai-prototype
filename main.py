@@ -31,8 +31,8 @@ BUILD_PREMODEL = True
 
 ### Classification layer stuff
 BUILD_MODEL = True
-TARGET_ITERATIONS = 1 # TODO: Reset from TEST -> 2
-K_MAX = 5 # TODO: Reset from TEST -> 2 
+TARGET_ITERATIONS = 10 # TODO: Reset from TEST -> 2
+K_MAX = 50 # TODO: Reset from TEST -> 2 
 
 ############ Test stuff ############
 TESTING = False
