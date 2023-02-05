@@ -11,6 +11,7 @@ from utils.utils import create_premodel
 
 from utils.constants import BASE_PATH
 from utils.constants import SOURCE_DATASETS
+from utils.constants import TARGET_DATASETS
 from utils.constants import TF_MODELS
 
 source_data_path = BASE_PATH + "data/source/"
@@ -23,13 +24,15 @@ VERBOSE = True
 RANDOM_STATE = 42
 TARGET_SIZE = (224, 224)
 INPUT_SHAPE = (*TARGET_SIZE, 3)
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 
 ### Pre-model stuff
 BUILD_PREMODEL = True
 
 ### Classification layer stuff
 BUILD_MODEL = True
+TARGET_ITERATIONS = 10
+K_MAX = 100
 
 ############ Test stuff ############
 TESTING = False
@@ -94,15 +97,20 @@ def run_train_premodels_with_sourcedata():
                 verbose = True
                 )
             
-            
             print(f"### Pre-model {premodel} instantiated. ###")
             print("######################################")
             
             train_preprocessed = preprocess_data_per_tfmodel(train_ds, model_name=premodel)
             test_preprocessed = preprocess_data_per_tfmodel(test_ds, model_name=premodel)
 
-            
-            model.fit(train_preprocessed, test_preprocessed)
+            try:
+                model.fit(train_preprocessed, test_preprocessed)
+            except Exception as e:
+                print("######################################")            
+                print("########## error occured #############")
+                print(f"BATCH_SIZE: {BATCH_SIZE}")
+                print(e)            
+                print("######################################")            
             
             print("######################################")
             print(f"### Pre-model {premodel} trained and saved ###")
@@ -124,7 +132,26 @@ def run_train_models_with_targetdata():
         os.makedirs(save_path_models)
         print("### Created directory: " + save_path_models + " ###")
         
-    
+
+    for dataset_name, img_format, num_classes, orig_shape in SOURCE_DATASETS:
+        
+        print("######################################")
+        print(f"### Switching to dataset: {dataset_name} ###")
+        print("######################################")
+        
+        # dataset_path = target_data_path + dataset_name + "/"
+        
+        # print()
+        # print(dataset_path)
+        # print()
+        
+        for index in range(TARGET_ITERATIONS):
+            pass
+        
+            for k in range(K_MAX):
+                pass
+        
+        
 
 
 if __name__ == '__main__':

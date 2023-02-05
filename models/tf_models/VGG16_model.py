@@ -271,10 +271,12 @@ class VGG16_model():
         y_pred_test = np.argmax(y_pred_test, axis=1)
         y_pred_train = np.argmax(y_pred_train, axis=1)
         
-        save_logs(save_path+model_file_name, hist, y_train, y_pred_train, y_test, 
-            y_pred_test, duration)
+        df_metrics, df_metrics_best_model = save_logs(save_path+model_file_name, 
+            hist, y_train, y_pred_train, y_test, y_pred_test, duration)
 
         keras.backend.clear_session()
+        
+        return df_metrics, df_metrics_best_model
         
 
     def predict(self, dataset):

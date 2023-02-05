@@ -351,13 +351,15 @@ def create_premodel(path, model_name, input_shape, dataset_name, num_classes, ve
         )
         
         
-def save_logs(path, hist, y_train, y_pred_train, y_test, y_pred_test, duration,):
+def save_logs(path, hist, y_train, y_pred_train, y_test, y_pred_test, duration, save=True):
     
     hist_df = pd.DataFrame(hist.history)
-    hist_df.to_csv(path + '_history.csv', index=False)
+    if save:
+        hist_df.to_csv(path + '_history.csv', index=False)
     
     df_metrics = calculate_metrics(y_train, y_pred_train, y_test, y_pred_test, duration,)
-    df_metrics.to_csv(path + '_metrics.csv', index=False)
+    if save:
+        df_metrics.to_csv(path + '_metrics.csv', index=False)
     
     index_best_model = hist_df['loss'].idxmin()
     row_best_model = hist_df.loc[index_best_model]
@@ -371,8 +373,11 @@ def save_logs(path, hist, y_train, y_pred_train, y_test, y_pred_test, duration,)
     df_best_model['best_model_train_acc'] = row_best_model['accuracy']
     df_best_model['best_model_val_acc'] = row_best_model['val_accuracy']
 
-    df_best_model.to_csv(path + '_best_model.csv', index=False)
+    if save:
+        df_best_model.to_csv(path + '_best_model.csv', index=False)
     plot_epochs_metric(hist, path + '_epochs_loss.png', metric='loss')
+    
+    return df_metrics, df_best_model
 
 
 def plot_epochs_metric(hist, file_name, metric='loss'):
