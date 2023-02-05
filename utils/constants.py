@@ -10,10 +10,11 @@ BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
 ITERATIONS = 5
 
 SOURCE_DATASETS = [
+    # ("mechanicalseals_fulllight", ".png", 2, (4000, 3000)), # TEST
     # ("imagenet", None, None, None),
-    ("dagm", ".PNG", 10, (512, 512)),
+    # ("dagm", ".PNG", 10, (512, 512)),
     ("caltech101", ".jpg", 102, (300, 297)), # will be made after safe set is trained
-    ("miniimagenet", ".JPEG", 100, (500, 375)), # crashed kernel TODO: test on workstation
+    # ("miniimagenet", ".JPEG", 100, (500, 375)), # crashed kernel TODO: test on workstation
 ]
 
 TARGET_DATASETS = [
