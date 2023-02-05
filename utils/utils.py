@@ -317,7 +317,7 @@ def create_premodel(path, model_name, input_shape, dataset_name, num_classes, ve
             build_pre_model = True,
             source_data_name = dataset_name, 
             source_num_classes = num_classes,
-            verbose = False
+            verbose = verbose
         )
     elif model_name == 'resnet101':
         from models.tf_models.ResNet101_model import ResNet101_model
@@ -327,7 +327,7 @@ def create_premodel(path, model_name, input_shape, dataset_name, num_classes, ve
             build_pre_model = True,
             source_data_name = dataset_name, 
             source_num_classes = num_classes,
-            verbose = False
+            verbose = verbose
         )
     elif model_name == 'mobilenet':
         from models.tf_models.MobileNet_model import MobileNet_model
@@ -337,7 +337,7 @@ def create_premodel(path, model_name, input_shape, dataset_name, num_classes, ve
             build_pre_model = True,
             source_data_name = dataset_name, 
             source_num_classes = num_classes,
-            verbose = False
+            verbose = verbose
         )
     elif model_name == 'densenet121':
         from models.tf_models.DenseNet121_model import DenseNet121_model
@@ -347,7 +347,7 @@ def create_premodel(path, model_name, input_shape, dataset_name, num_classes, ve
             build_pre_model = True,
             source_data_name = dataset_name, 
             source_num_classes = num_classes,
-            verbose = False
+            verbose = verbose
         )
         
         
