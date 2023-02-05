@@ -31,8 +31,8 @@ BUILD_PREMODEL = True
 
 ### Classification layer stuff
 BUILD_MODEL = True
-TARGET_ITERATIONS = 10
-K_MAX = 100
+TARGET_ITERATIONS = 2 # TODO: Reset from TEST
+K_MAX = 2 # TODO: Reset from TEST 
 
 ############ Test stuff ############
 TESTING = True
@@ -133,9 +133,9 @@ def run_train_models_with_targetdata():
     print(f"### Training of full models startet at: {timestamp_string} ###")
     
     
-    weights_path = BASE_PATH + "results/pre_models/weights/"
-    target_data_path = TARGET_DATA_PATH + "mechanicalseals_fulllight/"
-    experiments_path = BASE_PATH + "results/experiments/"
+    weights_path = BASE_PATH + "results/experiments/models/"
+    # target_data_path = TARGET_DATA_PATH + "mechanicalseals_fulllight/"
+    experiments_path = BASE_PATH + "results/experiments/results/"
     
     # if not os.path.exists(save_path_models):
     #     os.makedirs(save_path_models)
@@ -162,13 +162,25 @@ def run_train_models_with_targetdata():
                 print(f"### Switching to target dataset: {target_dataset_name} ###")
                 print("######################################")
                 
+                # data path for target
+                target_data_path = TARGET_DATA_PATH + target_dataset_name + "/"
+                
                 # path to pre trained models
-                model_source_weights_path = weights_path + premodel + "_" + source_dataset_name + "/"
+                model_source_weights_path = weights_path 
+                
+                print("model_source_weights_path: " + model_source_weights_path)
+                print()
+                print()
+                print()
                 
                 for iteration in range(TARGET_ITERATIONS):
                     
+                    print("######################################")
+                    print(f"### Switching to iteration: {iteration} ###")
+                    print("######################################")
+                    
                     # assembled name of experiment results per iteration per model per datasets
-                    iter_experiments_name = experiments_path + "it_" + str(iteration) + \
+                    iter_experiments_name = experiments_path + "it_" + str(iteration) + "_" + \
                         premodel + "_" + source_dataset_name + "_" + target_dataset_name
                     
                     
@@ -199,21 +211,38 @@ def run_train_models_with_targetdata():
                 
                     for k_shot in range(K_MAX):
                         
+                        if k_shot == 0:
+                            continue
+                        # else:
+                        #     pass
+                        
+                        print("######################################")
+                        print(f"### Switching to k_shot: {k_shot} ###")
+                        print("######################################")
+                        
                         # create model save path
-                        k_shot_model_save_path = experiments_path + "/models/" + \
-                            "it_" + str(iteration) + premodel + "_" + source_dataset_name + \
+                        k_shot_model_save_path = model_source_weights_path + \
+                            "it_" + str(iteration) + "_" + premodel + "_" + source_dataset_name + \
                             "_" + target_dataset_name + "_kshot_" + str(k_shot) + "/"
+                            
+                        print("k_shot_model_save_path: " + k_shot_model_save_path)
+                        print()
+                        print()
+                            
+                        if not os.path.exists(k_shot_model_save_path):
+                            os.makedirs(k_shot_model_save_path)
                         
                         # create full model
                         model = create_full_model(
-                            model_source_weights_path,
+                            weights_path,
                             premodel,
                             INPUT_SHAPE,
                             source_dataset_name,
                             target_dataset_name,
                             target_num_classes,
                             k_shot,
-                            verbose=True
+                            iteration,
+                            verbose=False # TODO: Reset from TEST
                         )
                     
                         # tain and test model
@@ -223,6 +252,8 @@ def run_train_models_with_targetdata():
                         )
                         
                         # save model (for XAI assessment after)
+                        # TODO: not good style, but works for now
+                        model.model.save_weights(k_shot_model_save_path + "model_weights.h5")
 
                         # return metrics, metrics_best
                         experimental_results.append(df_metrics_best_model.to_numpy()[0])
@@ -241,4 +272,5 @@ def run_train_models_with_targetdata():
 
 
 if __name__ == '__main__':
-    run_train_premodels_with_sourcedata()
+    # run_train_premodels_with_sourcedata()
+    run_train_models_with_targetdata()

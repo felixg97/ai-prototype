@@ -24,7 +24,8 @@ class DenseNet121_model():
                 trainable_pre_model = False,
                 target_data_name = None,
                 target_num_classes = None, 
-                k_shot = None, # target end
+                k_shot = None, 
+                iteration = None, # target end
                 verbose = False
             ):
         
@@ -44,8 +45,9 @@ class DenseNet121_model():
             + self.source_data_name
         self.pre_trained_pre_model_path = path + self.pre_model_file_name + "/"
         
-        if not os.path.exists(self.pre_trained_pre_model_path):
-            os.makedirs(self.pre_trained_pre_model_path)
+        if build_pre_model:
+            if not os.path.exists(self.pre_trained_pre_model_path):
+                os.makedirs(self.pre_trained_pre_model_path)
         
         ## target stuff
         self.build_top_model_flag = build_top_model
@@ -58,23 +60,26 @@ class DenseNet121_model():
                 self.model.summary()
             return 
         else:
-            weights_path = self.top_trained_pre_model_path + self.top_model_file_name
-            self.model = load_model(weights_path + "_model_best.h5")
+            weights_path = self.pre_trained_pre_model_path + \
+                self.pre_model_file_name
+                
+            if self.source_data_name != "imagenet":
+                self.model = load_model(weights_path + "_model_best.h5")
         
         
         ## down here bc of sequential processing 
         self.top_model_file_name = self.model_name + "_" \
             + self.source_data_name + "_" + self.target_data_name + "_" + str(k_shot)
-        self.top_trained_pre_model_path = path + self.top_model_file_name
+        self.pre_trained_top_model_path = path + self.top_model_file_name + "/"
             
         if build_top_model == True:
             self.build_top_model()
             if verbose: 
                 self.model.summary()
         else: 
-            weights_path = self.top_trained_pre_model_path + self.top_model_file_name
+            weights_path = self.pre_trained_top_model_path + self.top_model_file_name
             self.model = load_model(weights_path + "_model_best.h5")
-        
+    
     
     def build_pre_model(self):
         self.model = None # TF model
@@ -135,8 +140,15 @@ class DenseNet121_model():
     def build_top_model(self):
         
         # load pretrained model - loaded
-        if self.build_pre_model_flag is False:
-            raise Exception("You must set buil pre model to true")
+        if self.build_pre_model_flag is True:
+            raise Exception("You must set build pre model to False")
+        
+        if self.source_data_name == "imagenet":
+            self.model = keras.applications.DenseNet121(
+                input_shape=self.input_shape,
+                weights="imagenet",
+                include_top=False
+            )
 
         if self.trainable_pre_model_flag is False:
             # freeze all layers
@@ -148,7 +160,7 @@ class DenseNet121_model():
         x = None
         
         if self.source_data_name == "imagenet":
-            x = self.model.layers[-1].ouput 
+            x = self.model.layers[-1].output 
         else:
             x = self.model.layers[-4].output # test if it is the right layer TODO:
             
@@ -160,7 +172,7 @@ class DenseNet121_model():
             self.target_num_classes, activation="softmax", name="predictions")(x)
         
         self.model = keras.models.Model(
-            input=self.model.input, 
+            inputs=self.model.input, 
             outputs=output_layer)
         
         # Usa RMSprop optimizer

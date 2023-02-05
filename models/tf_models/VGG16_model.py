@@ -37,7 +37,8 @@ class VGG16_model():
                 trainable_pre_model = False,
                 target_data_name = None,
                 target_num_classes = None, 
-                k_shot = None, # target end
+                k_shot = None, 
+                iteration = None, # target end
                 verbose = False
             ):
         
@@ -57,8 +58,9 @@ class VGG16_model():
             + self.source_data_name
         self.pre_trained_pre_model_path = path + self.pre_model_file_name + "/"
         
-        if not os.path.exists(self.pre_trained_pre_model_path):
-            os.makedirs(self.pre_trained_pre_model_path)
+        if build_pre_model:
+            if not os.path.exists(self.pre_trained_pre_model_path):
+                os.makedirs(self.pre_trained_pre_model_path)
         
         ## target stuff
         self.build_top_model_flag = build_top_model
@@ -71,21 +73,23 @@ class VGG16_model():
                 self.model.summary()
             return 
         else:
-            weights_path = self.pre_trained_pre_model_path
-            self.model = load_model(weights_path + "_model_best.h5")
-        
+            weights_path = self.pre_trained_pre_model_path + \
+                self.pre_model_file_name
+                
+            if self.source_data_name != "imagenet":
+                self.model = load_model(weights_path + "_model_best.h5")
         
         ## down here bc of sequential processing 
-        self.top_model_file_name = self.model_name + "_" \
-            + self.source_data_name + "_" + self.target_data_name + "_" + str(k_shot)
-        self.top_trained_top_model_path = path + self.top_model_file_name
+        self.top_model_file_name = "it_" + str(iteration) + "_" + self.model_name + \
+            "_" + self.source_data_name + "_" + self.target_data_name + "_kshot_" + str(k_shot)
+        self.pre_trained_top_model_path = path + self.top_model_file_name + "/"
             
         if build_top_model == True:
             self.build_top_model()
             if verbose: 
                 self.model.summary()
         else: 
-            weights_path = self.top_trained_top_model_path + self.top_model_file_name
+            weights_path = self.pre_trained_top_model_path + self.top_model_file_name
             self.model = load_model(weights_path + "_model_best.h5")
         
     
@@ -148,8 +152,15 @@ class VGG16_model():
     def build_top_model(self):
         
         # load pretrained model - loaded
-        if self.build_pre_model_flag is False:
-            raise Exception("You must set buil pre model to true")
+        if self.build_pre_model_flag is True:
+            raise Exception("You must set build pre model to False")
+        
+        if self.source_data_name == "imagenet":
+            self.model = keras.applications.VGG16(
+                input_shape=self.input_shape,
+                weights="imagenet",
+                include_top=False
+            )
 
         if self.trainable_pre_model_flag is False:
             # freeze all layers
@@ -161,7 +172,7 @@ class VGG16_model():
         x = None
         
         if self.source_data_name == "imagenet":
-            x = self.model.layers[-1].ouput 
+            x = self.model.layers[-1].output 
         else:
             x = self.model.layers[-4].output # test if it is the right layer TODO:
             
@@ -173,7 +184,7 @@ class VGG16_model():
             self.target_num_classes, activation="softmax", name="predictions")(x)
         
         self.model = keras.models.Model(
-            input=self.model.input, 
+            inputs=self.model.input, 
             outputs=output_layer)
         
         # Usa RMSprop optimizer
@@ -189,7 +200,7 @@ class VGG16_model():
         # reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', 
         #     factor=0.5, patience=200, min_lr=0.1)
 
-        file_path = self.top_trained_pre_model_path + \
+        file_path = self.pre_trained_top_model_path + \
             self.top_model_file_name + "_model_best.h5"
 
         model_checkpoint = keras.callbacks.ModelCheckpoint(
@@ -226,8 +237,8 @@ class VGG16_model():
         if self.build_pre_model_flag is True and self.build_top_model_flag is False:
             save_path = self.pre_trained_pre_model_path
             model_file_name = self.pre_model_file_name
-        elif self.build_pre_model_flag is True and self.build_top_model_flag is True:
-            save_path = self.top_trained_pre_model_path
+        elif self.build_pre_model_flag is False and self.build_top_model_flag is True:
+            save_path = self.pre_trained_top_model_path
             model_file_name = self.top_model_file_name
         
         
@@ -245,9 +256,12 @@ class VGG16_model():
         
         ## Train the pre-model
         # batch_size = 64
-        num_epochs = 50
+        num_epochs = 1
         
-        # mini_batch = batch_size
+        print()
+        print("save_path: ", save_path)
+        print("model_file_name: ", model_file_name)
+        print()
         
         start_time = time.time()
         
