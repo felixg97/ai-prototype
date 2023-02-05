@@ -191,18 +191,20 @@ def run_train_models_with_targetdata():
                     train_ds = load_local_dataset_tf(
                         target_data_path, 
                         target_size=TARGET_SIZE, 
-                        subset="training", 
-                        batch_size=BATCH_SIZE,
-                        seed=RANDOM_STATE+iteration
+                        subset="training",
+                        seed=RANDOM_STATE+iteration,
+                        batch_size=1
                     )
                     
                     test_ds = load_local_dataset_tf(
                         target_data_path, 
                         target_size=TARGET_SIZE, 
-                        subset="test", 
-                        batch_size=BATCH_SIZE,
-                        seed=RANDOM_STATE+iteration
+                        subset="test",
+                        seed=RANDOM_STATE+iteration,
+                        batch_size=1
                     )
+                    
+                    test_size = int(test_ds.cardinality().numpy())
                     
                     train_preprocessed = preprocess_data_per_tfmodel(train_ds, model_name=premodel)
                     test_preprocessed = preprocess_data_per_tfmodel(test_ds, model_name=premodel)
@@ -212,8 +214,11 @@ def run_train_models_with_targetdata():
                         
                         if k_shot == 0:
                             continue
-                        # else:
-                        #     pass
+                        
+                        # reducing train to k_shot
+                        train_preprocessed = train_preprocessed.take(k_shot)
+                        test_preprocessed = test_preprocessed.take(test_size)
+                
                         
                         print("######################################")
                         print(f"### Switching to k_shot: {k_shot} ###")
