@@ -14,14 +14,14 @@ from utils.constants import SOURCE_DATASETS
 from utils.constants import TF_MODELS
 
 source_data_path = BASE_PATH + "data/source/"
-target_data_path = BASE_PATH + "data/source/"
+target_data_path = BASE_PATH + "data/target/"
 
 VERBOSE = True
 
 # Run specific constants, other to find in utils/constants.py
 ### Overall stuff
 RANDOM_STATE = 42
-TARGET_SIZE = (300, 300)
+TARGET_SIZE = (224, 224)
 INPUT_SHAPE = (*TARGET_SIZE, 3)
 BATCH_SIZE = 64
 
@@ -32,7 +32,7 @@ BUILD_PREMODEL = True
 BUILD_MODEL = True
 
 ############ Test stuff ############
-TESTING = True
+TESTING = False
 ####################################
 
 
@@ -61,10 +61,18 @@ def run_train_premodels_with_sourcedata():
         
         dataset_path = source_data_path + dataset_name + "/"
         
+        print()
+        print(dataset_path)
+        print()
+        
+        print("######################################")
         train_ds = load_local_dataset_tf(dataset_path, target_size=TARGET_SIZE, 
                                 subset="training", batch_size=BATCH_SIZE)
+        
+        print("######################################")
         test_ds = load_local_dataset_tf(dataset_path, target_size=TARGET_SIZE, 
                                 subset="test", batch_size=BATCH_SIZE)
+        print("######################################")
         
         if TESTING:
             train_ds = train_ds.take(5)
@@ -86,11 +94,14 @@ def run_train_premodels_with_sourcedata():
                 verbose = True
                 )
             
+            
             print(f"### Pre-model {premodel} instantiated. ###")
             print("######################################")
             
             train_preprocessed = preprocess_data_per_tfmodel(train_ds, model_name=premodel)
             test_preprocessed = preprocess_data_per_tfmodel(test_ds, model_name=premodel)
+
+            
             model.fit(train_preprocessed, test_preprocessed)
             
             print("######################################")
