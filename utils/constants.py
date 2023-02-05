@@ -12,8 +12,8 @@ ITERATIONS = 5
 SOURCE_DATASETS = [
     # ("imagenet", None, None, None),
     ("dagm", ".PNG", 10, (512, 512)),
-    ("caltech101", ".jpg", 102, (300, 297)), # will be made after safe set is trained
-    ("miniimagenet", ".JPEG", 100, (500, 375)), # crashed kernel TODO: test on workstation
+    # ("caltech101", ".jpg", 102, (300, 297)), # will be made after safe set is trained
+    # ("miniimagenet", ".JPEG", 100, (500, 375)), # crashed kernel TODO: test on workstation
 ]
 
 TARGET_DATASETS = [
