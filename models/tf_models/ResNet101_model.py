@@ -22,6 +22,7 @@ class ResNet101_model():
                 source_data_name = None, 
                 source_num_classes = None, # source end 
                 build_top_model = False, # target begin
+                pre_model_path = None,
                 trainable_pre_model = False,
                 target_data_name = None,
                 target_num_classes = None, 
@@ -61,16 +62,16 @@ class ResNet101_model():
                 self.model.summary()
             return 
         else:
-            weights_path = self.pre_trained_pre_model_path + \
-                self.pre_model_file_name
+            # TODO: pre model path is a dumb fix
+            weights_path = pre_model_path + self.pre_model_file_name + \
+                "/" + self.pre_model_file_name
                 
             if self.source_data_name != "imagenet":
                 self.model = load_model(weights_path + "_model_best.h5")
         
-        
         ## down here bc of sequential processing 
-        self.top_model_file_name = self.model_name + "_" \
-            + self.source_data_name + "_" + self.target_data_name + "_" + str(k_shot)
+        self.top_model_file_name = "it_" + str(iteration) + "_" + self.model_name + \
+            "_" + self.source_data_name + "_" + self.target_data_name + "_kshot_" + str(k_shot)
         self.pre_trained_top_model_path = path + self.top_model_file_name + "/"
             
         if build_top_model == True:
@@ -87,7 +88,7 @@ class ResNet101_model():
         
         if self.source_data_name == "imagenet":
             
-            self.model = keras.applications.ResNet101(
+            self.model = keras.applications.resnet.ResNet101(
                 input_shape=self.input_shape,
                 weights="imagenet",
                 include_top=False
@@ -145,7 +146,7 @@ class ResNet101_model():
             raise Exception("You must set build pre model to False")
         
         if self.source_data_name == "imagenet":
-            self.model = keras.applications.ResNet101(
+            self.model = keras.applications.resnet.ResNet101(
                 input_shape=self.input_shape,
                 weights="imagenet",
                 include_top=False
@@ -160,14 +161,16 @@ class ResNet101_model():
         # Classification block
         x = None
         
+        self.model.summary()
+        
         if self.source_data_name == "imagenet":
             x = self.model.layers[-1].output 
         else:
-            x = self.model.layers[-4].output # test if it is the right layer TODO:
+            x = self.model.layers[-5].output # test if it is the right layer TODO:
             
-        x = keras.layers.Flatten(name="flatten")(x)
-        x = keras.layers.Dense(32, activation="relu", name="fc1")(x)
-        x = keras.layers.Dense(32, activation="relu", name="fc2")(x)
+        x = keras.layers.Flatten(name="flatten_new")(x)
+        x = keras.layers.Dense(32, activation="relu", name="fc1_new")(x)
+        x = keras.layers.Dense(32, activation="relu", name="fc2_new")(x)
         
         output_layer = keras.layers.Dense(
             self.target_num_classes, activation="softmax", name="predictions")(x)
@@ -175,6 +178,8 @@ class ResNet101_model():
         self.model = keras.models.Model(
             inputs=self.model.input, 
             outputs=output_layer)
+        
+        self.model.summary()
         
         # Usa RMSprop optimizer
         optimizer = keras.optimizers.RMSprop(learning_rate=1e-5)
@@ -189,7 +194,7 @@ class ResNet101_model():
         # reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', 
         #     factor=0.5, patience=200, min_lr=0.1)
 
-        file_path = self.top_trained_pre_model_path + \
+        file_path = self.pre_trained_top_model_path + \
             self.top_model_file_name + "_model_best.h5"
 
         model_checkpoint = keras.callbacks.ModelCheckpoint(
@@ -226,8 +231,8 @@ class ResNet101_model():
         if self.build_pre_model_flag is True and self.build_top_model_flag is False:
             save_path = self.pre_trained_pre_model_path
             model_file_name = self.pre_model_file_name
-        elif self.build_pre_model_flag is True and self.build_top_model_flag is True:
-            save_path = self.top_trained_pre_model_path
+        elif self.build_pre_model_flag is False and self.build_top_model_flag is True:
+            save_path = self.pre_trained_top_model_path
             model_file_name = self.top_model_file_name
         
         
@@ -247,7 +252,10 @@ class ResNet101_model():
         # batch_size = 64
         num_epochs = 50
         
-        # mini_batch = batch_size
+        print()
+        print("save_path: ", save_path)
+        print("model_file_name: ", model_file_name)
+        print()
         
         start_time = time.time()
         
@@ -276,10 +284,12 @@ class ResNet101_model():
         y_pred_test = np.argmax(y_pred_test, axis=1)
         y_pred_train = np.argmax(y_pred_train, axis=1)
         
-        save_logs(save_path+model_file_name, hist, y_train, y_pred_train, y_test, 
-            y_pred_test, duration)
+        df_metrics, df_metrics_best_model = save_logs(save_path+model_file_name, 
+            hist, y_train, y_pred_train, y_test, y_pred_test, duration)
 
         keras.backend.clear_session()
+        
+        return df_metrics, df_metrics_best_model
         
 
     def predict(self, dataset):

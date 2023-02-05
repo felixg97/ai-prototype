@@ -132,9 +132,8 @@ def run_train_models_with_targetdata():
     print("######################################")
     print(f"### Training of full models startet at: {timestamp_string} ###")
     
-    
+    pre_model_weights_path = BASE_PATH + "results/pre_models/weights/"
     weights_path = BASE_PATH + "results/experiments/models/"
-    # target_data_path = TARGET_DATA_PATH + "mechanicalseals_fulllight/"
     experiments_path = BASE_PATH + "results/experiments/results/"
     
     # if not os.path.exists(save_path_models):
@@ -242,6 +241,7 @@ def run_train_models_with_targetdata():
                             target_num_classes,
                             k_shot,
                             iteration,
+                            pre_model_weights_path,
                             verbose=False # TODO: Reset from TEST
                         )
                     
@@ -250,11 +250,7 @@ def run_train_models_with_targetdata():
                             train_preprocessed,
                             test_preprocessed
                         )
-                        
-                        # save model (for XAI assessment after)
-                        # TODO: not good style, but works for now
-                        model.model.save_weights(k_shot_model_save_path + "model_weights.h5")
-
+                    
                         # return metrics, metrics_best
                         experimental_results.append(df_metrics_best_model.to_numpy()[0])
                     
@@ -269,7 +265,9 @@ def run_train_models_with_targetdata():
                     
                     experimental_results_df.to_csv(iter_experiments_name + "_experimental_results.csv")
         
-
+        
+def run_xai_evaluation_with_models():
+    pass
 
 if __name__ == '__main__':
     # run_train_premodels_with_sourcedata()

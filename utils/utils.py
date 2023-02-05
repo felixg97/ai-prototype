@@ -351,7 +351,7 @@ def create_premodel(path, model_name, input_shape, dataset_name, num_classes, ve
         )
         
 def create_full_model(path, model_name, input_shape, source_dataset_name, 
-    target_dataset_name, num_classes, k_shot, iteration, verbose=False):
+    target_dataset_name, num_classes, k_shot, iteration, pre_model_path, verbose=False):
     
     if model_name == 'vgg16':
         from models.tf_models.VGG16_model import VGG16_model
@@ -365,6 +365,7 @@ def create_full_model(path, model_name, input_shape, source_dataset_name,
             target_num_classes = num_classes,
             k_shot=k_shot,
             iteration=iteration,
+            pre_model_path=pre_model_path,
             verbose = verbose
         )
     elif model_name == 'resnet101':
@@ -379,6 +380,7 @@ def create_full_model(path, model_name, input_shape, source_dataset_name,
             target_num_classes = num_classes,
             k_shot=k_shot,
             iteration=iteration,
+            pre_model_path=pre_model_path,
             verbose = verbose
         )
     elif model_name == 'mobilenet':
@@ -393,6 +395,7 @@ def create_full_model(path, model_name, input_shape, source_dataset_name,
             target_num_classes = num_classes,
             k_shot=k_shot,
             iteration=iteration,
+            pre_model_path=pre_model_path,
             verbose = verbose
         )
     elif model_name == 'densenet121':
@@ -407,6 +410,7 @@ def create_full_model(path, model_name, input_shape, source_dataset_name,
             target_num_classes = num_classes,
             k_shot=k_shot,
             iteration=iteration,
+            pre_model_path=pre_model_path,
             verbose = verbose
         )
         

@@ -34,6 +34,7 @@ class VGG16_model():
                 source_data_name = None, 
                 source_num_classes = None, # source end 
                 build_top_model = False, # target begin
+                pre_model_path = None,
                 trainable_pre_model = False,
                 target_data_name = None,
                 target_num_classes = None, 
@@ -73,8 +74,9 @@ class VGG16_model():
                 self.model.summary()
             return 
         else:
-            weights_path = self.pre_trained_pre_model_path + \
-                self.pre_model_file_name
+            # TODO: pre model path is a dumb fix
+            weights_path = pre_model_path + self.pre_model_file_name + \
+                "/" + self.pre_model_file_name
                 
             if self.source_data_name != "imagenet":
                 self.model = load_model(weights_path + "_model_best.h5")
@@ -171,14 +173,16 @@ class VGG16_model():
         # Classification block
         x = None
         
+        self.model.summary()
+        
         if self.source_data_name == "imagenet":
             x = self.model.layers[-1].output 
         else:
-            x = self.model.layers[-4].output # test if it is the right layer TODO:
+            x = self.model.layers[-5].output # test if it is the right layer TODO:
             
-        x = keras.layers.Flatten(name="flatten")(x)
-        x = keras.layers.Dense(32, activation="relu", name="fc1")(x)
-        x = keras.layers.Dense(32, activation="relu", name="fc2")(x)
+        x = keras.layers.Flatten(name="flatten_new")(x)
+        x = keras.layers.Dense(32, activation="relu", name="fc1_new")(x)
+        x = keras.layers.Dense(32, activation="relu", name="fc2_new")(x)
         
         output_layer = keras.layers.Dense(
             self.target_num_classes, activation="softmax", name="predictions")(x)
@@ -186,6 +190,8 @@ class VGG16_model():
         self.model = keras.models.Model(
             inputs=self.model.input, 
             outputs=output_layer)
+        
+        self.model.summary()
         
         # Usa RMSprop optimizer
         optimizer = keras.optimizers.RMSprop(learning_rate=1e-5)
@@ -256,7 +262,7 @@ class VGG16_model():
         
         ## Train the pre-model
         # batch_size = 64
-        num_epochs = 1
+        num_epochs = 50
         
         print()
         print("save_path: ", save_path)
