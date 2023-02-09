@@ -31,8 +31,8 @@ BUILD_PREMODEL = True
 
 ### Classification layer stuff
 BUILD_MODEL = True
-TARGET_ITERATIONS = 10 # TODO: Reset from TEST -> 2
-K_MAX = 50 # TODO: Reset from TEST -> 2 
+TARGET_ITERATIONS = 5 # TODO: Reset from TEST -> 2
+K_MAX = 26 # TODO: Reset from TEST -> 2 
 
 ############ Test stuff ############
 TESTING = False
@@ -170,6 +170,10 @@ def run_train_models_with_targetdata():
                 
                 for iteration in range(TARGET_ITERATIONS):
                     
+                    # TODO: Parallelized @ this point -> Skip iteration 0
+                    if iteration == 0:
+                        continue
+                    
                     print("######################################")
                     print(f"### Switching to iteration: {iteration} ###")
                     print("######################################")
@@ -209,6 +213,9 @@ def run_train_models_with_targetdata():
                     for k_shot in range(K_MAX):
                         
                         if k_shot == 0:
+                            continue
+                        # TODO: fix run
+                        if k_shot < 24:
                             continue
                         print("######################################")
                         print(f"### Switching to k_shot: {k_shot} ###")
@@ -274,11 +281,137 @@ def run_train_models_with_targetdata():
                     )
                     
                     experimental_results_df.to_csv(iter_experiments_name + "_experimental_results.csv")
-        
+
+
+def run_pretrained_fullmodels_sophisticated_evaluation():
+    
+    # generate acc, f1-score, kappa, AUC
+    pass
+
         
 def run_xai_evaluation_with_models():
     pass
 
+
+def deduct_results():
+    
+    iterations = 5 # for range 
+    k_shot = 25 # for range
+    
+    models = [
+        "vgg16", 
+        "resnet101", 
+        "densenet121"
+    ]
+    
+    source_datasets = [
+        "imagenet",
+        "dagm",
+        "caltech101",
+    ]
+    
+    target_datasets = [
+        "mechanicalseals_fulllight",
+    ]
+    
+    
+    ## results for best and last (using last i guess)
+    ##
+    ## accuracy w/ standard deviation, 
+    ##
+    ## f1-score w/ standard deviation, kappa w/ standard deviation, AUC w/ standard deviation: nachträglich 
+    ##    
+    ## :::: accuracy per epoch; over all iteration per model //
+    ## :::: accuracy per epoch; over all iteration over all models //
+    ##
+    ##
+    ## :::: accuracy per k-shot; over all iteration per model 
+    ## :::: loss per k-shot; over all iteration per model
+    ## :::: accuracy per k-shot; over all iteration over all models
+    ## :::: loss per k-shot; over all iteration over all models
+    ##
+    
+    data_imagenet = {}
+    data_dagm = {}
+    
+    last_cols = ["precision_train", "accuracy_train", "recall_train", "precision_test", "accuracy_test", "recall_test", "duration"]
+    best_cols = ["best_model_train_loss", "best_model_val_loss", "best_model_train_acc", "best_model_val_acc", "best_model_learning_rate", "best_model_nb_epoch"]
+    hist_cols = ["epoch", "loss", "accuracy", "val_loss", "val_accuracy"]
+    
+    models_path =  BASE_PATH + "results/experiments/models/"
+
+    identifier_cols = ["iteration", "model", "source_dataset", "target_dataset", "k_shot"]
+
+    best_data_df = pd.DataFrame(columns=identifier_cols + best_cols)
+    last_data_df = pd.DataFrame(columns=identifier_cols + last_cols)
+    hist_data_df = pd.DataFrame(columns=identifier_cols + hist_cols)
+
+
+    print("best_data_df: " , best_data_df.columns)    
+    print("last_data_df: " , last_data_df.columns)    
+    print("hist_data_df: " , hist_data_df.columns) 
+    # return
+    print()
+    
+    for iteration in range(iterations):
+        for model in models:
+            for s_dataset in source_datasets:
+                for t_dataset in target_datasets:
+                    
+                    for k in range(k_shot):
+                        
+                        top_left_graph_collection = []
+                        top_right_graph_collection = []
+                        
+                        if k == 0:
+                            continue
+                        
+                        name = "it_" + str(iteration) + "_" + model + "_" + s_dataset + "_" + t_dataset + "_kshot_" + str(k)
+                        
+                        best_file_name = models_path + name + "/" + name + "_best_model.csv"
+                        last_file_name = models_path + name + "/" + name + "_metrics.csv"
+                        hist_file_name = models_path + name + "/" + name + "_history.csv"
+                        
+                        best_df = pd.read_csv(best_file_name)
+                        last_df = pd.read_csv(hist_file_name)
+                        hist_df = pd.read_csv(hist_file_name)
+                        
+                        identifier_dict = {}
+                        identifier_dict[identifier_cols[0]] = iteration
+                        identifier_dict[identifier_cols[1]] = model
+                        identifier_dict[identifier_cols[2]] = s_dataset
+                        identifier_dict[identifier_cols[3]] = t_dataset
+                        identifier_dict[identifier_cols[4]] = k
+                        
+                        print(identifier_dict)
+                        
+                        best_dict = best_df.iloc[0].to_dict()
+        
+                        
+                        print(best_df.columns)
+                        print(best_df.iloc[0].to_dict())
+                        print()
+                        print(best_data_df)
+                        
+                        
+                        
+                        # print(last_df.columns)
+                        # print(hist_df.columns)
+                        
+                        break
+                    ###############
+                    # top_left_graph[k] = top_left_graph_collection # for all k 
+                    # top_right_graph[k] = top_right_graph_collection # for all k
+                    break
+                break
+            break
+        break
+    
+    pass
+    
+
 if __name__ == '__main__':
     # run_train_premodels_with_sourcedata()
-    run_train_models_with_targetdata()
+    # run_train_models_with_targetdata()
+    
+    deduct_results()
