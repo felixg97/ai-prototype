@@ -347,21 +347,15 @@ def deduct_results():
     hist_data_df = pd.DataFrame(columns=identifier_cols + hist_cols)
 
 
-    print("best_data_df: " , best_data_df.columns)    
-    print("last_data_df: " , last_data_df.columns)    
-    print("hist_data_df: " , hist_data_df.columns) 
-    # return
-    print()
-    
+    # print("best_data_df: " , best_data_df.columns)    
+    # print("last_data_df: " , last_data_df.columns)    
+    # print("hist_data_df: " , hist_data_df.columns) 
     for iteration in range(iterations):
         for model in models:
             for s_dataset in source_datasets:
                 for t_dataset in target_datasets:
                     
                     for k in range(k_shot):
-                        
-                        top_left_graph_collection = []
-                        top_right_graph_collection = []
                         
                         if k == 0:
                             continue
@@ -372,10 +366,6 @@ def deduct_results():
                         last_file_name = models_path + name + "/" + name + "_metrics.csv"
                         hist_file_name = models_path + name + "/" + name + "_history.csv"
                         
-                        best_df = pd.read_csv(best_file_name)
-                        last_df = pd.read_csv(hist_file_name)
-                        hist_df = pd.read_csv(hist_file_name)
-                        
                         identifier_dict = {}
                         identifier_dict[identifier_cols[0]] = iteration
                         identifier_dict[identifier_cols[1]] = model
@@ -383,31 +373,50 @@ def deduct_results():
                         identifier_dict[identifier_cols[3]] = t_dataset
                         identifier_dict[identifier_cols[4]] = k
                         
-                        print(identifier_dict)
+                        if os.path.exists(best_file_name) == True:
+                            best_df = pd.read_csv(best_file_name)
+                            
+                            best_dict = identifier_dict.copy()
+                            best_dict.update(best_df.iloc[0].to_dict())
+                            best_df = pd.DataFrame(best_dict, index=[0])
+                            best_data_df = pd.concat([best_data_df, best_df], ignore_index=True)
+                            
+                        if os.path.exists(last_file_name) == True:
+                            last_df = pd.read_csv(last_file_name)
+                            
+                            last_dict = identifier_dict.copy()
+                            last_dict.update(last_df.iloc[0].to_dict())
+                            last_df = pd.DataFrame(last_dict, index=[0])
+                            last_data_df = pd.concat([last_data_df, last_df], ignore_index=True)
+
+                        if os.path.exists(hist_file_name) == True:
+                            hist_df = pd.read_csv(hist_file_name)
+                            
+                            for index, row in hist_df.iterrows():
+                                hist_dict = identifier_dict.copy()
+                                hist_dict.update(row.to_dict())
+                                hist_df = pd.DataFrame(hist_dict, index=[0])
+                                hist_data_df = pd.concat([hist_data_df, hist_df], ignore_index=True)
                         
-                        best_dict = best_df.iloc[0].to_dict()
-        
                         
-                        print(best_df.columns)
-                        print(best_df.iloc[0].to_dict())
-                        print()
-                        print(best_data_df)
-                        
-                        
-                        
-                        # print(last_df.columns)
-                        # print(hist_df.columns)
-                        
-                        break
-                    ###############
-                    # top_left_graph[k] = top_left_graph_collection # for all k 
-                    # top_right_graph[k] = top_right_graph_collection # for all k
-                    break
-                break
-            break
-        break
+                        pass # end of k-shot for loop
+                    pass # end of target dataset for loop
+                pass # end of source dataset for loop
+            pass # end of model for loop
+        pass # end of iteration for loop
     
-    pass
+    
+    
+    print("best_data_df: ", best_data_df.shape)
+    print("last_data_df: ", last_data_df.shape)
+    print("hist_data_df: ", hist_data_df.shape)
+    
+    path = BASE_PATH + "results/experiments/"
+    
+    best_data_df.to_hdf(path + "best_data_df.h5", key="df", mode="w")
+    last_data_df.to_hdf(path + "last_data_df.h5", key="df", mode="w")
+    hist_data_df.to_hdf(path + "hist_data_df.h5", key="df", mode="w")
+    
     
 
 if __name__ == '__main__':
