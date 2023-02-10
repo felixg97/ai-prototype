@@ -31,8 +31,8 @@ BUILD_PREMODEL = True
 
 ### Classification layer stuff
 BUILD_MODEL = True
-TARGET_ITERATIONS = 10 # TODO: Reset from TEST -> 2
-K_MAX = 50 # TODO: Reset from TEST -> 2 
+TARGET_ITERATIONS = 5 # TODO: Reset from TEST -> 2
+K_MAX = 51 # TODO: Reset from TEST -> 2 # Full run: 51 
 
 ############ Test stuff ############
 TESTING = False
@@ -174,6 +174,10 @@ def run_train_models_with_targetdata():
                     print(f"### Switching to iteration: {iteration} ###")
                     print("######################################")
                     
+                    # TODO: Due to run <= 24 -> continue
+                    if iteration <= 3:
+                        continue
+                    
                     # assembled name of experiment results per iteration per model per datasets
                     iter_experiments_name = experiments_path + "it_" + str(iteration) + "_" + \
                         premodel + "_" + source_dataset_name + "_" + target_dataset_name
@@ -210,6 +214,10 @@ def run_train_models_with_targetdata():
                         
                         if k_shot == 0:
                             continue
+                        # TODO: Due to run <= 24 -> continue
+                        # if k_shot <= 46:
+                        #     continue
+                        
                         print("######################################")
                         print(f"### Switching to k_shot: {k_shot} ###")
                         print("######################################")
@@ -272,8 +280,8 @@ def run_train_models_with_targetdata():
                                 'best_model_learning_rate', 'best_model_nb_epoch'],
                         data=experimental_results
                     )
-                    
-                    experimental_results_df.to_csv(iter_experiments_name + "_experimental_results.csv")
+                    # TODO: Due to run <= 24 -> "filename_2"
+                    experimental_results_df.to_csv(iter_experiments_name + "_experimental_results_2.csv")
         
         
 def run_xai_evaluation_with_models():
