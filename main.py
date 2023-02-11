@@ -395,6 +395,7 @@ def deduct_results():
                             for index, row in hist_df.iterrows():
                                 hist_dict = identifier_dict.copy()
                                 hist_dict.update(row.to_dict())
+                                hist_dict.update({"epoch": index})
                                 hist_df = pd.DataFrame(hist_dict, index=[0])
                                 hist_data_df = pd.concat([hist_data_df, hist_df], ignore_index=True)
                         
