@@ -296,7 +296,7 @@ def run_xai_evaluation_with_models():
 def deduct_results():
     
     iterations = 5 # for range 
-    k_shot = 25 # for range
+    k_shot = 50 # for range
     
     models = [
         "vgg16", 
