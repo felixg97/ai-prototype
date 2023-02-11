@@ -4,9 +4,15 @@ import time
 
 import tensorflow as tf
 import pandas as pd
+import numpy as np
 
 from sklearn.model_selection import train_test_split
+from PIL import Image
 
+import shap
+
+from models.explainer.gradcam import GradCAM
+from utils.utils import load_img
 from utils.utils import load_local_dataset_train_test, load_local_dataset_tf, preprocess_data_per_tfmodel
 from utils.utils import create_premodel, create_full_model
 
@@ -290,7 +296,133 @@ def run_pretrained_fullmodels_sophisticated_evaluation():
 
         
 def run_xai_evaluation_with_models():
+    
+    ## Load images 
+    image_path = BASE_PATH + "data/target/mechanicalseals_fulllight/"
+    class_names = ["damaged", "undamaged"] # as trained 
+    
+    
+    #### Image 97 - damaged
+    image97 = load_img(image_path + "damaged/" + "97.png", target_size=(224, 224))
+    
+    #### Image 71 - damaged
+    image71 = load_img(image_path + "damaged/" + "71.png", target_size=(224, 224))
+    
+    #### Image 16 - undamaged
+    image16 = load_img(image_path + "undamaged/" + "16.png", target_size=(224, 224))
+    
+    iterations = 2 # for range 
+    
+    k_shot = [1, 5, 10, 15, 20, 25]
+    
+    models = [
+        "vgg16", 
+        # "resnet101", 
+        # "densenet121"
+    ]
+    
+    model_types = [
+        "_model_last",
+        "_model_best"
+    ]
+    
+    source_datasets = [
+        "imagenet",
+        "dagm",
+        "caltech101",
+    ]
+    
+    target_datasets = [
+        "mechanicalseals_fulllight",
+    ]
+    
+    base_path = BASE_PATH + "results/experiments/models/"
+    save_path = BASE_PATH + "results/xai/"
+    
+    
+    
+    for iteration in range(iterations):
+        for model in models:
+            
+            preprocessing_func = None
+            
+            if model == "vgg16":
+                preprocessing_func = tf.keras.applications.vgg16.preprocess_input
+            elif model == "resnet101":
+                preprocessing_func = tf.keras.applications.resnet.preprocess_input
+            elif model == "densenet121":
+                preprocessing_func = tf.keras.applications.densenet.preprocess_input
+            
+            image97_preprocessed = preprocessing_func(image97)
+            image71_preprocessed = preprocessing_func(image71)
+            image16_preprocessed = preprocessing_func(image16)
+            
+            for s_dataset in source_datasets:
+                for t_dataset in target_datasets:
+                    for k in k_shot:
+                        
+                        # print(iteration, " ", type(iteration))
+                        # print(k, " ", type(k))
+                        
+                        model_path = "it_" + str(iteration) + "_" + model + "_" + s_dataset + "_" + t_dataset + "_kshot_" + str(k) 
+                        path = base_path + model_path + "/"
+                        
+                        # print(path)
+                        
+                        # check if path exists
+                        if os.path.exists(path) == False:
+                            continue
+                        
+                        for model_type in model_types:
+                        
+                            # check if path exsists
+                            modeltype_path = path + model_path + model_type + ".h5"
+                            # print(best_path)
+                            
+                            if os.path.exists(modeltype_path) == False:
+                                continue
+                            
+                            tf_model = tf.keras.models.load_model(modeltype_path)
+                            print(f"model loaded: {model_path}{model_type}")
+                            
+                            pred_97 = np.argmax(tf_model.predict(image97_preprocessed))
+                            pred_71 = np.argmax(tf_model.predict(image71_preprocessed))
+                            
+                            print("97: ", class_names[pred_97])
+                            print("71: ", class_names[pred_71])
+                            
+                            grad_cam_97 = GradCAM(tf_model, 0)
+                            grad_cam_97_hm = grad_cam_97.compute_heatmap(image97_preprocessed)
+                            grad_cam_97_res = grad_cam_97.overlay_heatmap(grad_cam_97_hm, image97[0])
+                            grad_cam_97_img = Image.fromarray(grad_cam_97_res[1])
+                            grad_cam_97_img.save(save_path + model_path + "_damaged_gradcam_97.png")
+                            
+                            grad_cam_71 = GradCAM(tf_model, 0)
+                            grad_cam_71_hm = grad_cam_71.compute_heatmap(image71_preprocessed)
+                            grad_cam_71_res = grad_cam_71.overlay_heatmap(grad_cam_71_hm, image71[0])
+                            grad_cam_71_img = Image.fromarray(grad_cam_71_res[1])
+                            grad_cam_71_img.save(save_path + model_path + "_damaged_gradcam_71.png")
+                            
+                            
+                            
+                            
+                            # shap_masker = shap.maskers.Image("blur(128,128)", X[0].shape)
+                            
+                            # break
+                        pass
+                        # break
+                    pass
+                    # break
+                pass
+                # break
+            pass
+            # break
+        pass
+        # break
     pass
+                            
+                        
+                        
 
 
 def deduct_results():
@@ -424,4 +556,6 @@ if __name__ == '__main__':
     # run_train_premodels_with_sourcedata()
     # run_train_models_with_targetdata()
     
-    deduct_results()
+    run_xai_evaluation_with_models()
+    
+    # deduct_results()
