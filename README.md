@@ -1,6 +1,6 @@
 # ai-prototype
 
-#### /
+#### /.
 
 *main.py*: This file contains functionality to run the experiments. 1.) Pretrain the transfer learning models, 2.) Train and evaluate the models in a few--shot learning scenario. Lastly, you can evaluate all few-shot transfer learning models using Grad-Cam and LIME. 
 
