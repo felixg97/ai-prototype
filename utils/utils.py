@@ -475,3 +475,21 @@ def calculate_metrics(y_train, y_pred_train, y_test, y_pred_test, duration,):
     res['duration'] = duration
     
     return res
+
+
+
+
+
+def load_img(path, target_size=None):
+    
+    img = Image.open(path)
+    img = img.convert('RGB')
+
+    if target_size:
+        img = img.resize((target_size))
+        img = np.array(img)
+        
+    
+    img = np.expand_dims(img, axis=0)
+        
+    return img
