@@ -191,6 +191,10 @@ def run_train_models_with_targetdata():
                     print(f"### Switching to iteration: {iteration} ###")
                     print("######################################")
                     
+                    # TODO: Due to run <= 24 -> continue
+                    if iteration <= 3:
+                        continue
+                    
                     # assembled name of experiment results per iteration per model per datasets
                     iter_experiments_name = experiments_path + "it_" + str(iteration) + "_" + \
                         premodel + "_" + source_dataset_name + "_" + target_dataset_name

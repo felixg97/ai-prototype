@@ -4,8 +4,8 @@
 Env
 
 """
-BASE_PATH = "/Users/felixgerschner/git/ai-prototype/" # mac
-# BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
+# BASE_PATH = "/Users/felixgerschner/git/ai-prototype/" # mac
+BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
 
 ITERATIONS = 5
 
@@ -31,7 +31,7 @@ TF_MODELS = [
     # "mobilenetV2",
     # "mobilenetV3Large", 
     # "mobilenetV3Small", 
-    "densenet121", # suggested in paper
+    # "densenet121", # suggested in paper
 ]
 
 TF_CLASSIFIER = [
