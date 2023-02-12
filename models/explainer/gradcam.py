@@ -87,8 +87,8 @@ class GradCAM:
         # apply the supplied color map to the heatmap and then
         # overlay the heatmap on the input image
         
-        # print(heatmap.shape)
-        # print(iheatmap.shape))
+        print(type(heatmap), heatmap.shape)
+        print(type(image), image.shape)
     
         heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
         heatmap_bgr = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)

@@ -8,8 +8,15 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 from PIL import Image
+import cv2
+import matplotlib.pyplot as plt
 
 import shap
+import lime
+import lime.lime_image
+
+from skimage.io import imsave, imread
+from skimage.transform import resize
 
 from models.explainer.gradcam import GradCAM
 from utils.utils import load_img
@@ -311,7 +318,13 @@ def run_xai_evaluation_with_models():
     #### Image 16 - undamaged
     image16 = load_img(image_path + "undamaged/" + "16.png", target_size=(224, 224))
     
-    iterations = 2 # for range 
+    iterations = [
+        0,
+        # 1,
+        # 2,
+        # 3,
+        # 4,
+    ]  
     
     k_shot = [1, 5, 10, 15, 20, 25]
     
@@ -341,7 +354,7 @@ def run_xai_evaluation_with_models():
     
     
     
-    for iteration in range(iterations):
+    for iteration in iterations:
         for model in models:
             
             preprocessing_func = None
@@ -391,26 +404,74 @@ def run_xai_evaluation_with_models():
                             print("97: ", class_names[pred_97])
                             print("71: ", class_names[pred_71])
                             
+                            resize = (275, 275)
+                            
+                            ### GradCAM - Image 97
                             grad_cam_97 = GradCAM(tf_model, 0)
                             grad_cam_97_hm = grad_cam_97.compute_heatmap(image97_preprocessed)
                             grad_cam_97_res = grad_cam_97.overlay_heatmap(grad_cam_97_hm, image97[0])
                             grad_cam_97_img = Image.fromarray(grad_cam_97_res[1])
+                            grad_cam_97_img = grad_cam_97_img.resize(resize)
                             grad_cam_97_img.save(save_path + model_path + "_damaged_gradcam_97.png")
-                            
+
+                            ### GradCAM - Image 71
                             grad_cam_71 = GradCAM(tf_model, 0)
                             grad_cam_71_hm = grad_cam_71.compute_heatmap(image71_preprocessed)
                             grad_cam_71_res = grad_cam_71.overlay_heatmap(grad_cam_71_hm, image71[0])
                             grad_cam_71_img = Image.fromarray(grad_cam_71_res[1])
+                            grad_cam_71_img = grad_cam_71_img.resize(resize)
                             grad_cam_71_img.save(save_path + model_path + "_damaged_gradcam_71.png")
                             
                             
+                            ### LIME - Image 97
+                            explainer = lime.lime_image.LimeImageExplainer()
                             
+                            explanation = explainer.explain_instance(image97_preprocessed[0], 
+                                tf_model.predict, 
+                                # hide_color=(128, 128, 128),
+                                hide_color=(0, 0, 0),
+                                num_samples=1000
+                            )
                             
-                            # shap_masker = shap.maskers.Image("blur(128,128)", X[0].shape)
+                            # Visualize the explanation
+                            temp, mask = explanation.get_image_and_mask(
+                                label=0, 
+                                positive_only=False, 
+                                negative_only=False, 
+                                hide_rest=False,
+                                num_features=20
+                                )
+                            
+                            # Save the explanation as an image
+                            temp = cv2.resize(temp, resize, interpolation = cv2.INTER_CUBIC)
+                            cv2.imwrite(save_path + model_path + "_damaged_lime_97.png", temp)
+                            
+                            ### LIME - Image 71
+                            explainer = lime.lime_image.LimeImageExplainer()
+                            
+                            explanation = explainer.explain_instance(image71_preprocessed[0], 
+                                tf_model.predict, 
+                                # hide_color=(128, 128, 128),
+                                hide_color=(0, 0, 0),
+                                num_samples=1000
+                            )
+                            
+                            # Visualize the explanation
+                            temp, mask = explanation.get_image_and_mask(
+                                label=0, 
+                                positive_only=False, 
+                                negative_only=False, 
+                                hide_rest=False,
+                                num_features=20
+                                )
+                            
+                            # Save the explanation as an image
+                            temp = cv2.resize(temp, resize, interpolation = cv2.INTER_CUBIC)
+                            cv2.imwrite(save_path + model_path + "_damaged_lime_71.png", temp)
                             
                             # break
                         pass
-                        # break
+                        break
                     pass
                     # break
                 pass
