@@ -91,7 +91,8 @@ class GradCAM:
         print(type(image), image.shape)
     
         heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-        heatmap_bgr = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+        # heatmap_bgr = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+        heatmap_bgr = heatmap
         output = cv2.addWeighted(image, alpha, heatmap_bgr, 1 - alpha, 0)
         # return a 2-tuple of the color mapped heatmap and the output,
         # overlaid image

@@ -304,6 +304,8 @@ def run_pretrained_fullmodels_sophisticated_evaluation():
         
 def run_xai_evaluation_with_models():
     
+    RESIZE = (275, 275)
+    
     ## Load images 
     image_path = BASE_PATH + "data/target/mechanicalseals_fulllight/"
     class_names = ["damaged", "undamaged"] # as trained 
@@ -311,27 +313,29 @@ def run_xai_evaluation_with_models():
     
     #### Image 97 - damaged
     image97 = load_img(image_path + "damaged/" + "97.png", target_size=(224, 224))
+    image97_resized = load_img(image_path + "damaged/" + "97.png", target_size=RESIZE)
     
     #### Image 71 - damaged
     image71 = load_img(image_path + "damaged/" + "71.png", target_size=(224, 224))
+    image71_resized = load_img(image_path + "damaged/" + "71.png", target_size=RESIZE)
     
     #### Image 16 - undamaged
     image16 = load_img(image_path + "undamaged/" + "16.png", target_size=(224, 224))
     
     iterations = [
         0,
-        # 1,
-        # 2,
-        # 3,
-        # 4,
+        1,
+        2,
+        3,
+        4,
     ]  
     
     k_shot = [1, 5, 10, 15, 20, 25]
     
     models = [
         "vgg16", 
-        # "resnet101", 
-        # "densenet121"
+        "resnet101", 
+        "densenet121"
     ]
     
     model_types = [
@@ -401,26 +405,26 @@ def run_xai_evaluation_with_models():
                             pred_97 = np.argmax(tf_model.predict(image97_preprocessed))
                             pred_71 = np.argmax(tf_model.predict(image71_preprocessed))
                             
-                            print("97: ", class_names[pred_97])
-                            print("71: ", class_names[pred_71])
+                            # print("97: ", class_names[pred_97])
+                            # print("71: ", class_names[pred_71])
                             
-                            resize = (275, 275)
+                            
                             
                             ### GradCAM - Image 97
                             grad_cam_97 = GradCAM(tf_model, 0)
                             grad_cam_97_hm = grad_cam_97.compute_heatmap(image97_preprocessed)
                             grad_cam_97_res = grad_cam_97.overlay_heatmap(grad_cam_97_hm, image97[0])
                             grad_cam_97_img = Image.fromarray(grad_cam_97_res[1])
-                            grad_cam_97_img = grad_cam_97_img.resize(resize)
-                            grad_cam_97_img.save(save_path + model_path + "_damaged_gradcam_97.png")
+                            grad_cam_97_img = grad_cam_97_img.resize(RESIZE, Image.BICUBIC)
+                            # grad_cam_97_img.save(save_path + model_path + "_damaged_gradcam_97.png")
 
                             ### GradCAM - Image 71
                             grad_cam_71 = GradCAM(tf_model, 0)
                             grad_cam_71_hm = grad_cam_71.compute_heatmap(image71_preprocessed)
                             grad_cam_71_res = grad_cam_71.overlay_heatmap(grad_cam_71_hm, image71[0])
                             grad_cam_71_img = Image.fromarray(grad_cam_71_res[1])
-                            grad_cam_71_img = grad_cam_71_img.resize(resize)
-                            grad_cam_71_img.save(save_path + model_path + "_damaged_gradcam_71.png")
+                            grad_cam_71_img = grad_cam_71_img.resize(RESIZE, Image.BICUBIC)
+                            # grad_cam_71_img.save(save_path + model_path + "_damaged_gradcam_71.png")
                             
                             
                             ### LIME - Image 97
@@ -430,7 +434,7 @@ def run_xai_evaluation_with_models():
                                 tf_model.predict, 
                                 # hide_color=(128, 128, 128),
                                 hide_color=(0, 0, 0),
-                                num_samples=1000
+                                num_samples=5
                             )
                             
                             # Visualize the explanation
@@ -443,8 +447,8 @@ def run_xai_evaluation_with_models():
                                 )
                             
                             # Save the explanation as an image
-                            temp = cv2.resize(temp, resize, interpolation = cv2.INTER_CUBIC)
-                            cv2.imwrite(save_path + model_path + "_damaged_lime_97.png", temp)
+                            lime_97_img = cv2.resize(temp, RESIZE, interpolation = cv2.INTER_CUBIC)
+                            # cv2.imwrite(save_path + model_path + "_damaged_lime_97.png", temp)
                             
                             ### LIME - Image 71
                             explainer = lime.lime_image.LimeImageExplainer()
@@ -453,7 +457,7 @@ def run_xai_evaluation_with_models():
                                 tf_model.predict, 
                                 # hide_color=(128, 128, 128),
                                 hide_color=(0, 0, 0),
-                                num_samples=1000
+                                num_samples=5
                             )
                             
                             # Visualize the explanation
@@ -466,12 +470,32 @@ def run_xai_evaluation_with_models():
                                 )
                             
                             # Save the explanation as an image
-                            temp = cv2.resize(temp, resize, interpolation = cv2.INTER_CUBIC)
-                            cv2.imwrite(save_path + model_path + "_damaged_lime_71.png", temp)
+                            lime_71_img = cv2.resize(temp, RESIZE, interpolation = cv2.INTER_CUBIC)
+                            # cv2.imwrite(save_path + model_path + "_damaged_lime_71.png", temp)
+                            
+                            
+                            images97 = [image97_resized[0], grad_cam_97_img, lime_97_img]
+                            images71 = [image71_resized[0], grad_cam_71_img, lime_71_img]
+                            
+                            # for image in images97:
+                            #     print(np.array(image).shape)
+                            
+                            image97_comb = np.hstack((np.array(i) for i in images97))
+                            image71_comb = np.hstack((np.array(i) for i in images71))
+                            
+                            print("image97_comb: ", type(image97_comb), image97_comb.shape)
+                            
+                            cv2.imwrite(save_path + model_path + "_damaged_97.png", image97_comb)
+                            # image97_comb.save(save_path + model_path + "_damaged_97.png")
+                            
+                            cv2.imwrite(save_path + model_path + "_damaged_71.png", image71_comb)
+                            # image71_comb.save(save_path + model_path + "_damaged_71.png")
+
+                            
                             
                             # break
                         pass
-                        break
+                        # break
                     pass
                     # break
                 pass
