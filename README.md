@@ -16,7 +16,8 @@ The data are not pushed into the github repository, to avoid storage overload.
 
 The results are not pushed into the github repository, to avoid storage overload. For some evaluation details look at the Results-Analysis.iypnb.
 
-*/models*
+#### /models
+
 
 Contains all models that have been used in this project. 
 
