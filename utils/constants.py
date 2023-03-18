@@ -4,8 +4,8 @@
 Env
 
 """
-# BASE_PATH = "/Users/felixgerschner/git/ai-prototype/" # mac
-BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
+BASE_PATH = "/Users/felixgerschner/git/ai-prototype/"  # mac
+# BASE_PATH = "/home/fgerschner/git/ai-prototype/" # machine
 
 ITERATIONS = 5
 
@@ -21,7 +21,7 @@ TARGET_DATASETS = [
 ]
 
 TF_MODELS = [
-    # "vgg16", # suggested in paper
+    "vgg16",  # suggested in paper
     # "vgg19",
     # "resnet50",
     # "resnet50V2",
@@ -29,15 +29,14 @@ TF_MODELS = [
     # "resnet101V2",
     # "mobilenet", # suggested in paper
     # "mobilenetV2",
-    # "mobilenetV3Large", 
-    # "mobilenetV3Small", 
+    # "mobilenetV3Large",
+    # "mobilenetV3Small",
     # "densenet121", # suggested in paper
 ]
 
 TF_CLASSIFIER = [
     "custom"
 ]
-
 
 
 K = [
