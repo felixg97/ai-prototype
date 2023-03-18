@@ -169,8 +169,8 @@ class ResNet101_model():
             x = self.model.layers[-5].output
 
         x = keras.layers.GlobalAveragePooling2D(name="avg_pool")(x)
-        x = keras.layers.Dense(self.target_num_classes, activation="softmax",
-                               name="predictions")(x)
+        output_layer = keras.layers.Dense(self.target_num_classes,
+                                          activation="softmax", name="predictions")(x)
 
         self.model = keras.models.Model(
             inputs=self.model.input,
