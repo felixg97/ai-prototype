@@ -118,6 +118,7 @@ class VGG16_model():
 
         # Usa RMSprop optimizer w/ lr=1e-4
         optimizer = keras.optimizers.RMSprop(learning_rate=1e-4)
+        optimizer = keras.optimizers.Adam()
 
         self.model.compile(
             loss=self.cross_entropy,
@@ -203,8 +204,9 @@ class VGG16_model():
         if self.verbose:
             self.model.summary()
 
-        # Usa RMSprop optimizer
-        optimizer = keras.optimizers.RMSprop(learning_rate=1e-5)
+        # Use Adam optimizer with relatively low learning rate to avoid
+        # rapid changes
+        optimizer = keras.optimizers.Adam(learning_rate=1e-4)
 
         # Compile model
         self.model.compile(
