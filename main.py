@@ -245,8 +245,15 @@ def run_train_models_with_targetdata():
                         # reduce to k_shot size 2(N)*k
                         k_shot_train_preprocessed = train_preprocessed.take(
                             train_size)
+
+                        # for img, label in k_shot_train_preprocessed.take(2):
+                        #     print(img.shape, " ", label.numpy())
+
                         k_shot_train_preprocessed = split_dataset_in_intact_and_defect_balanced(
                             k_shot_train_preprocessed, k_shot)
+
+                        # for img, label in k_shot_train_preprocessed.take(2):
+                        #     print(img.shape, " ", label.numpy())
 
                         # info: full test size
                         k_shot_test_preprocessed = test_preprocessed.take(

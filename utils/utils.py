@@ -334,11 +334,12 @@ def split_dataset_in_intact_and_defect_balanced(dataset, k):
     i = 0
     for image, label in dataset.unbatch():
         if label.numpy()[0] == 0:  # intact
-            images_intact.append(image.numpy())
-            labels_intact.append(label.numpy())
+            # has to be in arr to fit shape
+            images_intact.append([image.numpy()])
+            labels_intact.append([label.numpy()])
         elif label.numpy()[0] == 1:  # defect
-            images_defect.append(image.numpy())
-            labels_defect.append(label.numpy())
+            images_defect.append([image.numpy()])
+            labels_defect.append([label.numpy()])
 
         i += 1
         # if i == 3:
