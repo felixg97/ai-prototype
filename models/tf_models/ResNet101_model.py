@@ -108,7 +108,14 @@ class ResNet101_model():
         self.model.compile(
             loss=self.cross_entropy,
             optimizer=optimizer,
-            metrics=['accuracy']
+            metrics=[
+                tf.keras.metrics.Accuracy(),
+                tf.keras.metrics.AUC(),
+                tf.keras.metrics.TrueNegatives(),
+                tf.keras.metrics.TruePositives(),
+                tf.keras.metrics.FalseNegatives(),
+                tf.keras.metrics.FalsePositives(),
+            ]
         )
 
         # reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss',
@@ -131,7 +138,7 @@ class ResNet101_model():
         self.callbacks = [
             # reduce_lr,
             model_checkpoint,
-            early_stopping,
+            # early_stopping
         ]
 
         if self.verbose == True:
@@ -186,7 +193,14 @@ class ResNet101_model():
         self.model.compile(
             optimizer=optimizer,
             loss=self.cross_entropy,
-            metrics=['accuracy']
+            metrics=[
+                tf.keras.metrics.Accuracy(),
+                tf.keras.metrics.AUC(),
+                tf.keras.metrics.TrueNegatives(),
+                tf.keras.metrics.TruePositives(),
+                tf.keras.metrics.FalseNegatives(),
+                tf.keras.metrics.FalsePositives(),
+            ]
         )
 
         # reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss',

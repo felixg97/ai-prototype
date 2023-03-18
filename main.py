@@ -234,13 +234,15 @@ def run_train_models_with_targetdata():
                         if k_shot == 0:
                             continue
                         # # TODO: fix run
-                        # if k_shot < 24:
-                        #     continue
+                        if k_shot > 41:  # first run
+                            continue
+                        if k_shot > 51:  # second run
+                            continue
                         print("######################################")
                         print(f"### Switching to k_shot: {k_shot} ###")
                         print("######################################")
 
-                        # reduce to k_shot size k*2
+                        # reduce to k_shot size 2(N)*k
                         k_shot_train_preprocessed = train_preprocessed.take(
                             train_size)
                         k_shot_train_preprocessed = split_dataset_in_intact_and_defect_balanced(

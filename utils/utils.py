@@ -536,10 +536,13 @@ def calculate_metrics(y_train, y_pred_train, y_test, y_pred_test, duration,):
                        columns=['precision_train', 'accuracy_train', 'recall_train',
                                 'precision_test', 'accuracy_test', 'recall_test', 'duration'])
 
+    # train
     res['precision_train'] = precision_score(
         y_train, y_pred_train, average='macro')
     res['accuracy_train'] = accuracy_score(y_train, y_pred_train)
     res['recall_train'] = recall_score(y_train, y_pred_train, average='macro')
+
+    # test
     res['precision_test'] = precision_score(
         y_test, y_pred_test, average='macro')
     res['accuracy_test'] = accuracy_score(y_test, y_pred_test)
