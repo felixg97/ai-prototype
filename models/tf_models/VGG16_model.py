@@ -116,8 +116,7 @@ class VGG16_model():
             include_top=True
         )
 
-        # Usa RMSprop optimizer w/ lr=1e-4
-        optimizer = keras.optimizers.RMSprop(learning_rate=1e-4)
+        # Usa standard Adam
         optimizer = keras.optimizers.Adam()
 
         self.model.compile(
