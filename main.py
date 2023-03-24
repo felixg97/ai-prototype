@@ -11,12 +11,6 @@ from PIL import Image
 import cv2
 import matplotlib.pyplot as plt
 
-import shap
-import lime
-import lime.lime_image
-
-from skimage.io import imsave, imread
-from skimage.transform import resize
 
 from models.explainer.gradcam import GradCAM
 from utils.utils import load_img
@@ -461,60 +455,12 @@ def run_xai_evaluation_with_models():
                                 RESIZE, Image.BICUBIC)
                             # grad_cam_71_img.save(save_path + model_path + "_damaged_gradcam_71.png")
 
-                            # LIME - Image 97
-                            explainer = lime.lime_image.LimeImageExplainer()
-
-                            explanation = explainer.explain_instance(image97_preprocessed[0],
-                                                                     tf_model.predict,
-                                                                     # hide_color=(128, 128, 128),
-                                                                     hide_color=(
-                                                                         0, 0, 0),
-                                                                     num_samples=5
-                                                                     )
-
-                            # Visualize the explanation
-                            temp, mask = explanation.get_image_and_mask(
-                                label=0,
-                                positive_only=False,
-                                negative_only=False,
-                                hide_rest=False,
-                                num_features=20
-                            )
-
-                            # Save the explanation as an image
-                            lime_97_img = cv2.resize(
-                                temp, RESIZE, interpolation=cv2.INTER_CUBIC)
-                            # cv2.imwrite(save_path + model_path + "_damaged_lime_97.png", temp)
-
-                            # LIME - Image 71
-                            explainer = lime.lime_image.LimeImageExplainer()
-
-                            explanation = explainer.explain_instance(image71_preprocessed[0],
-                                                                     tf_model.predict,
-                                                                     # hide_color=(128, 128, 128),
-                                                                     hide_color=(
-                                                                         0, 0, 0),
-                                                                     num_samples=5
-                                                                     )
-
-                            # Visualize the explanation
-                            temp, mask = explanation.get_image_and_mask(
-                                label=0,
-                                positive_only=False,
-                                negative_only=False,
-                                hide_rest=False,
-                                num_features=20
-                            )
-
-                            # Save the explanation as an image
-                            lime_71_img = cv2.resize(
-                                temp, RESIZE, interpolation=cv2.INTER_CUBIC)
-                            # cv2.imwrite(save_path + model_path + "_damaged_lime_71.png", temp)
+                            
 
                             images97 = [image97_resized[0],
-                                        grad_cam_97_img, lime_97_img]
+                                        grad_cam_97_img]
                             images71 = [image71_resized[0],
-                                        grad_cam_71_img, lime_71_img]
+                                        grad_cam_71_img]
 
                             # for image in images97:
                             #     print(np.array(image).shape)
