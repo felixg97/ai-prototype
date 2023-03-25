@@ -203,6 +203,7 @@ def run_train_models_with_targetdata(multi_gpu=True):
                         premodel, source_dataset_name,
                         target_dataset_name,
                         target_num_classes,
+                        gpu_device
                     ):
                         print("Started threaded training of top model")
 
@@ -327,34 +328,62 @@ def run_train_models_with_targetdata(multi_gpu=True):
                         experimental_results_df.to_csv(
                             iter_experiments_name + "_experimental_results.csv")
 
-                    gpus = tf.config.list_physical_devices("GPU")
+                    def parallel_func(gpu_devices, gpus_tracker):
+                        gpu_device_name = gpus_tracker.pop()
+
+                        gpu_device = None
+                        for gpu in gpu_devices:
+                            if gpu.name is gpu_device_name:
+                                gpu_device = gpu
+
+                        print(f"Iteration is running on {gpu_device}")
+
+                        print(gpu_tracker)
+
+                        time.sleep(30)
+
+                        gpus_tracker.append(gpu_device_name)
+
+                    gpu_devices = tf.config.list_physical_devices("GPU")
+                    gpu_tracker = [gpu.name for gpu in gpu_devices]
 
                     iterations = list(reversed([i for i in range(
                         TARGET_ITERATIONS)]))
 
                     while len(iterations) > 0:
-                        for gpu in gpus:
+                        if len(gpu_tracker) == 0:
+                            print("Waiting for GPU")
+                            time.sleep(10)
+                        else:
                             iteration = iterations.pop()
+
                             print("######################################")
                             print(
                                 f"### Switching to iteration: {iteration} ###")
                             print("######################################")
-                            print(f"Iteration is running on {gpu}")
 
                             thread = threading.Thread(
-                                target=train_top_model_iteration,
-                                args=(
-                                    iteration,
-                                    weights_path,
-                                    pre_model_weights_path,
-                                    experiments_path,
-                                    premodel, source_dataset_name,
-                                    target_dataset_name,
-                                    target_num_classes,
-                                )
+                                target=parallel_func,
+                                args=(gpu_devices, gpu_tracker)
                             )
 
                             thread.start()
+
+                            # thread = threading.Thread(
+                            #     target=train_top_model_iteration,
+                            #     args=(
+                            #         iteration,
+                            #         weights_path,
+                            #         pre_model_weights_path,
+                            #         experiments_path,
+                            #         premodel, source_dataset_name,
+                            #         target_dataset_name,
+                            #         target_num_classes,
+                            #         gpu
+                            #     )
+                            # )
+
+                            # thread.start()
 
                 else:
                     for iteration in range(TARGET_ITERATIONS):
