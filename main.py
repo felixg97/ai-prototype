@@ -195,129 +195,137 @@ def run_train_models_with_targetdata(multi_gpu=True):
 
                 if multi_gpu:
 
-                    def train_top_model_iteration(iterations):
+                    def train_top_model_iteration(
+                        iteration,
+                        weights_path,
+                        pre_model_weights_path,
+                        experiments_path,
+                        premodel, source_dataset_name,
+                        target_dataset_name,
+                        target_num_classes,
+                    ):
                         print("Started threaded training of top model")
 
-                        # # assembled name of experiment results per iteration per model per datasets
-                        # iter_experiments_name = experiments_path + "it_" + str(iteration) + "_" + \
-                        #     premodel + "_" + source_dataset_name + "_" + target_dataset_name
+                        # assembled name of experiment results per iteration per model per datasets
+                        iter_experiments_name = experiments_path + "it_" + str(iteration) + "_" + \
+                            premodel + "_" + source_dataset_name + "_" + target_dataset_name
 
-                        # # create list for later dataframe
-                        # experimental_results = []
+                        # create list for later dataframe
+                        experimental_results = []
 
-                        # # load data set
-                        # # w/ seed RANDOM_STATE + iteration
-                        # train_ds = load_local_dataset_tf(
-                        #     target_data_path,
-                        #     target_size=TARGET_SIZE,
-                        #     subset="training",
-                        #     seed=RANDOM_STATE+iteration,
-                        #     batch_size=1
-                        # )
+                        # load data set
+                        # w/ seed RANDOM_STATE + iteration
+                        train_ds = load_local_dataset_tf(
+                            target_data_path,
+                            target_size=TARGET_SIZE,
+                            subset="training",
+                            seed=RANDOM_STATE+iteration,
+                            batch_size=1
+                        )
 
-                        # test_ds = load_local_dataset_tf(
-                        #     target_data_path,
-                        #     target_size=TARGET_SIZE,
-                        #     subset="test",
-                        #     seed=RANDOM_STATE+iteration,
-                        #     batch_size=1
-                        # )
+                        test_ds = load_local_dataset_tf(
+                            target_data_path,
+                            target_size=TARGET_SIZE,
+                            subset="test",
+                            seed=RANDOM_STATE+iteration,
+                            batch_size=1
+                        )
 
-                        # train_size = int(train_ds.cardinality().numpy())
-                        # test_size = int(test_ds.cardinality().numpy())
+                        train_size = int(train_ds.cardinality().numpy())
+                        test_size = int(test_ds.cardinality().numpy())
 
-                        # train_preprocessed = preprocess_data_per_tfmodel(
-                        #     train_ds, model_name=premodel)
-                        # test_preprocessed = preprocess_data_per_tfmodel(
-                        #     test_ds, model_name=premodel)
+                        train_preprocessed = preprocess_data_per_tfmodel(
+                            train_ds, model_name=premodel)
+                        test_preprocessed = preprocess_data_per_tfmodel(
+                            test_ds, model_name=premodel)
 
-                        # for k_shot in range(K_MAX):
+                        for k_shot in range(K_MAX):
 
-                        #     if k_shot == 0:
-                        #         continue
-                        #     # # TODO: fix run
-                        #     if k_shot > 41:  # first run
-                        #         continue
-                        #     if k_shot > 51:  # second run
-                        #         continue
-                        #     print("######################################")
-                        #     print(f"### Switching to k_shot: {k_shot} ###")
-                        #     print("######################################")
+                            if k_shot == 0:
+                                continue
+                            # # TODO: fix run
+                            if k_shot > 41:  # first run
+                                continue
+                            if k_shot > 51:  # second run
+                                continue
+                            print("######################################")
+                            print(f"### Switching to k_shot: {k_shot} ###")
+                            print("######################################")
 
-                        #     # reduce to k_shot size 2(N)*k
-                        #     k_shot_train_preprocessed = train_preprocessed.take(
-                        #         train_size)
+                            # reduce to k_shot size 2(N)*k
+                            k_shot_train_preprocessed = train_preprocessed.take(
+                                train_size)
 
-                        #     # for img, label in k_shot_train_preprocessed.take(2):
-                        #     #     print(img.shape, " ", label.numpy())
+                            # for img, label in k_shot_train_preprocessed.take(2):
+                            #     print(img.shape, " ", label.numpy())
 
-                        #     k_shot_train_preprocessed = split_dataset_in_intact_and_defect_balanced(
-                        #         k_shot_train_preprocessed, k_shot)
+                            k_shot_train_preprocessed = split_dataset_in_intact_and_defect_balanced(
+                                k_shot_train_preprocessed, k_shot)
 
-                        #     # for img, label in k_shot_train_preprocessed.take(2):
-                        #     #     print(img.shape, " ", label.numpy())
+                            # for img, label in k_shot_train_preprocessed.take(2):
+                            #     print(img.shape, " ", label.numpy())
 
-                        #     # info: full test size
-                        #     k_shot_test_preprocessed = test_preprocessed.take(
-                        #         test_size)
+                            # info: full test size
+                            k_shot_test_preprocessed = test_preprocessed.take(
+                                test_size)
 
-                        #     print(f"IT IS {k_shot} SHOOTING")
-                        #     print(type(k_shot))
-                        #     print(k_shot_train_preprocessed.cardinality().numpy())
-                        #     print()
-                        #     print(f"And test size: {test_size}")
-                        #     print()
+                            print(f"IT IS {k_shot} SHOOTING")
+                            print(type(k_shot))
+                            print(k_shot_train_preprocessed.cardinality().numpy())
+                            print()
+                            print(f"And test size: {test_size}")
+                            print()
 
-                        #     # create model save path
-                        #     k_shot_model_save_path = model_source_weights_path + \
-                        #         "it_" + str(iteration) + "_" + premodel + "_" + source_dataset_name + \
-                        #         "_" + target_dataset_name + \
-                        #         "_kshot_" + str(k_shot) + "/"
+                            # create model save path
+                            k_shot_model_save_path = model_source_weights_path + \
+                                "it_" + str(iteration) + "_" + premodel + "_" + source_dataset_name + \
+                                "_" + target_dataset_name + \
+                                "_kshot_" + str(k_shot) + "/"
 
-                        #     print("k_shot_model_save_path: " +
-                        #           k_shot_model_save_path)
-                        #     print()
-                        #     print()
+                            print("k_shot_model_save_path: " +
+                                  k_shot_model_save_path)
+                            print()
+                            print()
 
-                        #     if not os.path.exists(k_shot_model_save_path):
-                        #         os.makedirs(k_shot_model_save_path)
+                            if not os.path.exists(k_shot_model_save_path):
+                                os.makedirs(k_shot_model_save_path)
 
-                        #     # create full model
-                        #     model = create_full_model(
-                        #         weights_path,
-                        #         premodel,
-                        #         INPUT_SHAPE,
-                        #         source_dataset_name,
-                        #         target_dataset_name,
-                        #         target_num_classes,
-                        #         k_shot,
-                        #         iteration,
-                        #         pre_model_weights_path,
-                        #         verbose=False  # TODO: Reset from TEST -> False
-                        #     )
+                            # create full model
+                            model = create_full_model(
+                                weights_path,
+                                premodel,
+                                INPUT_SHAPE,
+                                source_dataset_name,
+                                target_dataset_name,
+                                target_num_classes,
+                                k_shot,
+                                iteration,
+                                pre_model_weights_path,
+                                verbose=False  # TODO: Reset from TEST -> False
+                            )
 
-                        #     # tain and test model
-                        #     df_metrics, df_metrics_best_model = model.fit(
-                        #         k_shot_train_preprocessed,
-                        #         k_shot_test_preprocessed
-                        #     )
+                            # tain and test model
+                            df_metrics, df_metrics_best_model = model.fit(
+                                k_shot_train_preprocessed,
+                                k_shot_test_preprocessed
+                            )
 
-                        #     # return metrics, metrics_best
-                        #     experimental_results.append(
-                        #         df_metrics_best_model.to_numpy()[0])
+                            # return metrics, metrics_best
+                            experimental_results.append(
+                                df_metrics_best_model.to_numpy()[0])
 
-                        #     del k_shot_train_preprocessed, k_shot_test_preprocessed
+                            del k_shot_train_preprocessed, k_shot_test_preprocessed
 
-                        # # save experimental results
-                        # experimental_results_df = pd.DataFrame(
-                        #     columns=['best_model_train_loss', 'best_model_val_loss',
-                        #              'best_model_train_acc', 'best_model_val_acc',
-                        #              'best_model_learning_rate', 'best_model_nb_epoch'],
-                        #     data=experimental_results
-                        # )
+                        # save experimental results
+                        experimental_results_df = pd.DataFrame(
+                            columns=['best_model_train_loss', 'best_model_val_loss',
+                                     'best_model_train_acc', 'best_model_val_acc',
+                                     'best_model_learning_rate', 'best_model_nb_epoch'],
+                            data=experimental_results
+                        )
 
-                        # experimental_results_df.to_csv(
-                        #     iter_experiments_name + "_experimental_results.csv")
+                        experimental_results_df.to_csv(
+                            iter_experiments_name + "_experimental_results.csv")
 
                     gpus = tf.config.list_physical_devices("GPU")
 
@@ -335,7 +343,16 @@ def run_train_models_with_targetdata(multi_gpu=True):
 
                             thread = threading.Thread(
                                 target=train_top_model_iteration,
-                                args=(iteration,))
+                                args=(
+                                    iteration,
+                                    weights_path,
+                                    pre_model_weights_path,
+                                    experiments_path,
+                                    premodel, source_dataset_name,
+                                    target_dataset_name,
+                                    target_num_classes,
+                                )
+                            )
 
                             thread.start()
 
