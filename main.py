@@ -732,17 +732,17 @@ def run_xai_evaluation_with_models():
 
                             ### 97
                             cv2.imwrite(save_path + model_path +
-                                        f"_damaged_97_{pred_97}_comb.png", image97_comb)
+                                        f"_damaged_97_{pred_97}{model_type}.png", image97_comb)
                                                         
                             pd.DataFrame(grad_cam_97_hm)\
-                                .to_csv(save_path + model_path + f"_damaged_97_{pred_97}.csv", index=False)
+                                .to_csv(save_path + model_path + f"_damaged_97_{pred_97}{model_type}.csv", index=False)
                             
                             ### 71
                             cv2.imwrite(save_path + model_path +
-                                        f"_damaged_71_{pred_71}_comb.png", image71_comb)
+                                        f"_damaged_71_{pred_71}{model_type}.png", image71_comb)
                             
                             pd.DataFrame(grad_cam_71_hm)\
-                                .to_csv(save_path + model_path + f"_damaged_71_{pred_71}.csv", index=False)
+                                .to_csv(save_path + model_path + f"_damaged_71_{pred_71}{model_type}.csv", index=False)
 
 
                             # break
