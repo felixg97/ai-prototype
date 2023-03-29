@@ -40,7 +40,9 @@ BUILD_PREMODEL = True
 # Classification layer stuff
 BUILD_MODEL = True
 TARGET_ITERATIONS = 5  # TODO: Reset from TEST -> 2
-K_MAX = 51  # TODO: Reset from TEST -> 2
+K_MAX = 51  # TODO: Reset from TEST -> 2 # machine
+K_MAX = 31  # TODO: Reset from TEST -> 2 # low machine
+
 
 ############ Test stuff ############
 TESTING = False
@@ -358,6 +360,8 @@ def run_train_models_with_targetdata(multi_gpu=True):
 
                     gpu_devices = tf.config.list_physical_devices("GPU")
                     gpu_tracker = [gpu.name for gpu in gpu_devices]
+                    
+                    print(gpu_tracker)
 
                     iterations = list(reversed([i for i in range(
                         TARGET_ITERATIONS)]))
@@ -373,28 +377,34 @@ def run_train_models_with_targetdata(multi_gpu=True):
                             print(
                                 f"### Switching to iteration: {iteration} ###")
                             print("######################################")
+                            
+                            
 
                             # thread = threading.Thread(
                             #     target=parallel_func,
                             #     args=(gpu_devices, gpu_tracker)
                             # )
                             # thread.start()
+                            
+                            try:
 
-                            thread = threading.Thread(
-                                target=train_top_model_iteration,
-                                args=(
-                                    iteration,
-                                    weights_path,
-                                    pre_model_weights_path,
-                                    experiments_path,
-                                    premodel, source_dataset_name,
-                                    target_dataset_name,
-                                    target_num_classes,
-                                    gpu_devices,
-                                    gpu_tracker
+                                thread = threading.Thread(
+                                    target=train_top_model_iteration,
+                                    args=(
+                                        iteration,
+                                        weights_path,
+                                        pre_model_weights_path,
+                                        experiments_path,
+                                        premodel, source_dataset_name,
+                                        target_dataset_name,
+                                        target_num_classes,
+                                        gpu_devices,
+                                        gpu_tracker
+                                    )
                                 )
-                            )
-                            thread.start()
+                                thread.start()
+                            except Exception as e:
+                                print(e)
 
                 else:
                     for iteration in range(TARGET_ITERATIONS):
@@ -402,6 +412,32 @@ def run_train_models_with_targetdata(multi_gpu=True):
                         # # TODO: Parallelized @ this point -> Skip iteration 0
                         # if iteration == 0:
                         #     continue
+                        # if iteration == 1:
+                        #     continue
+                        
+                        # if premodel == "vgg16":
+                        #     continue
+                        # if premodel == "resnet101":
+                        #     if source_dataset_name == "imagenet":
+                        #         continue
+                        #     if iteration < 4:
+                        #         continue
+                        
+                        if premodel == "resnet101" \
+                            and source_dataset_name == "caltech101":
+                                pass
+                        elif premodel == "resnet101" \
+                            and source_dataset_name == "dagm" \
+                                and iteration == 3:
+                                    pass
+                        else:
+                            continue
+                                
+                                
+                        
+                        
+                        
+
 
                         # # TODO: Due to run <= 24 -> continue
                         # if iteration <= 3:
@@ -571,7 +607,7 @@ def run_xai_evaluation_with_models():
         4,
     ]
 
-    k_shot = [1, 5, 10, 15, 20, 25]
+    k_shot = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25]
 
     models = [
         "vgg16",
@@ -694,13 +730,20 @@ def run_xai_evaluation_with_models():
                             print("image97_comb: ", type(
                                 image97_comb), image97_comb.shape)
 
+                            ### 97
                             cv2.imwrite(save_path + model_path +
-                                        "_damaged_97.png", image97_comb)
-                            # image97_comb.save(save_path + model_path + "_damaged_97.png")
+                                        f"_damaged_97_{pred_97}_comb.png", image97_comb)
+                                                        
+                            pd.DataFrame(grad_cam_97_hm)\
+                                .to_csv(save_path + model_path + f"_damaged_97_{pred_97}.csv", index=False)
+                            
+                            ### 71
+                            cv2.imwrite(save_path + model_path +
+                                        f"_damaged_71_{pred_71}_comb.png", image71_comb)
+                            
+                            pd.DataFrame(grad_cam_71_hm)\
+                                .to_csv(save_path + model_path + f"_damaged_71_{pred_71}.csv", index=False)
 
-                            cv2.imwrite(save_path + model_path +
-                                        "_damaged_71.png", image71_comb)
-                            # image71_comb.save(save_path + model_path + "_damaged_71.png")
 
                             # break
                         pass
@@ -854,9 +897,9 @@ def test_some():
 
 if __name__ == '__main__':
     # run_train_premodels_with_sourcedata()
-    run_train_models_with_targetdata()
+    # run_train_models_with_targetdata(multi_gpu=False)
 
-    # run_xai_evaluation_with_models()
+    run_xai_evaluation_with_models()
 
     # deduct_results()
 
