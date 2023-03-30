@@ -12,12 +12,12 @@ import cv2
 import matplotlib.pyplot as plt
 import threading
 
-import shap
-import lime
-import lime.lime_image
+# import shap
+# import lime
+# import lime.lime_image
 
-from skimage.io import imsave, imread
-from skimage.transform import resize
+# from skimage.io import imsave, imread
+# from skimage.transform import resize
 
 from models.explainer.gradcam import GradCAM
 from utils.utils import load_img
@@ -47,6 +47,8 @@ BUILD_PREMODEL = True
 BUILD_MODEL = True
 TARGET_ITERATIONS = 5  # TODO: Reset from TEST -> 2
 K_MAX = 51  # TODO: Reset from TEST -> 2
+K_MAX = 31  # TODO: Reset from TEST -> 2
+
 
 ############ Test stuff ############
 TESTING = False
@@ -149,6 +151,10 @@ def run_train_models_with_targetdata(multi_gpu=True):
     # allocate percentage of gpu memory
     config.gpu_options.per_process_gpu_memory_fraction = 0.8  # method 2
     # session
+    # config.gpu_options.visible_device_list = "1"
+    #
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    #
     session = tf.compat.v1.InteractiveSession(config=config)
 
     timestamp_string = time.gmtime(start)
@@ -413,6 +419,35 @@ def run_train_models_with_targetdata(multi_gpu=True):
                         # if iteration <= 3:
                         #     continue
 
+                        # if premodel == "vgg16" \
+                        #         and source_dataset_name == "imagenet":
+                        #     continue
+
+                        # if premodel == "resnet101" \
+                        #     and source_dataset_name == "caltech101" \
+                        #         and iteration == 4:
+                        #     pass
+                        # elif premodel == "vgg16" \
+                        #     and source_dataset_name == "imagenet" \
+                        #         and 2 <= iteration and iteration <= 4:
+                        #     pass
+                        # elif premodel == "vgg16" \
+                        #     and source_dataset_name == "imagenet" \
+                        #         and iteration == 0:
+                        #     pass
+                        # else:
+                        #     continue
+
+                        if premodel == "vgg16" \
+                            and source_dataset_name == "caltech101":
+                            pass
+                        elif premodel == "vgg16" \
+                            and source_dataset_name == "dagm":
+                            pass
+                        else:
+                            continue
+
+
                         print("######################################")
                         print(f"### Switching to iteration: {iteration} ###")
                         print("######################################")
@@ -455,8 +490,8 @@ def run_train_models_with_targetdata(multi_gpu=True):
                             if k_shot == 0:
                                 continue
                             # # TODO: fix run
-                            if k_shot > 41:  # first run
-                                continue
+                            # if k_shot < 31:  # first run, adapted run from 41 to 31
+                            #     continue
                             if k_shot > 51:  # second run
                                 continue
                             print("######################################")
@@ -577,7 +612,7 @@ def run_xai_evaluation_with_models():
         4,
     ]
 
-    k_shot = [1, 5, 10, 15, 20, 25]
+    k_shot = [1,2,3,4,5, 6,7,8,9,10, 15, 20, 25]
 
     models = [
         "vgg16",
@@ -683,59 +718,59 @@ def run_xai_evaluation_with_models():
                             # grad_cam_71_img.save(save_path + model_path + "_damaged_gradcam_71.png")
 
                             # LIME - Image 97
-                            explainer = lime.lime_image.LimeImageExplainer()
+                            # explainer = lime.lime_image.LimeImageExplainer()
 
-                            explanation = explainer.explain_instance(image97_preprocessed[0],
-                                                                     tf_model.predict,
-                                                                     # hide_color=(128, 128, 128),
-                                                                     hide_color=(
-                                                                         0, 0, 0),
-                                                                     num_samples=5
-                                                                     )
+                            # explanation = explainer.explain_instance(image97_preprocessed[0],
+                            #                                          tf_model.predict,
+                            #                                          # hide_color=(128, 128, 128),
+                            #                                          hide_color=(
+                            #                                              0, 0, 0),
+                            #                                          num_samples=5
+                            #                                          )
 
-                            # Visualize the explanation
-                            temp, mask = explanation.get_image_and_mask(
-                                label=0,
-                                positive_only=False,
-                                negative_only=False,
-                                hide_rest=False,
-                                num_features=20
-                            )
+                            # # Visualize the explanation
+                            # temp, mask = explanation.get_image_and_mask(
+                            #     label=0,
+                            #     positive_only=False,
+                            #     negative_only=False,
+                            #     hide_rest=False,
+                            #     num_features=20
+                            # )
 
-                            # Save the explanation as an image
-                            lime_97_img = cv2.resize(
-                                temp, RESIZE, interpolation=cv2.INTER_CUBIC)
-                            # cv2.imwrite(save_path + model_path + "_damaged_lime_97.png", temp)
+                            # # Save the explanation as an image
+                            # lime_97_img = cv2.resize(
+                            #     temp, RESIZE, interpolation=cv2.INTER_CUBIC)
+                            # # cv2.imwrite(save_path + model_path + "_damaged_lime_97.png", temp)
 
-                            # LIME - Image 71
-                            explainer = lime.lime_image.LimeImageExplainer()
+                            # # LIME - Image 71
+                            # explainer = lime.lime_image.LimeImageExplainer()
 
-                            explanation = explainer.explain_instance(image71_preprocessed[0],
-                                                                     tf_model.predict,
-                                                                     # hide_color=(128, 128, 128),
-                                                                     hide_color=(
-                                                                         0, 0, 0),
-                                                                     num_samples=5
-                                                                     )
+                            # explanation = explainer.explain_instance(image71_preprocessed[0],
+                            #                                          tf_model.predict,
+                            #                                          # hide_color=(128, 128, 128),
+                            #                                          hide_color=(
+                            #                                              0, 0, 0),
+                            #                                          num_samples=5
+                            #                                          )
 
-                            # Visualize the explanation
-                            temp, mask = explanation.get_image_and_mask(
-                                label=0,
-                                positive_only=False,
-                                negative_only=False,
-                                hide_rest=False,
-                                num_features=20
-                            )
+                            # # Visualize the explanation
+                            # temp, mask = explanation.get_image_and_mask(
+                            #     label=0,
+                            #     positive_only=False,
+                            #     negative_only=False,
+                            #     hide_rest=False,
+                            #     num_features=20
+                            # )
 
-                            # Save the explanation as an image
-                            lime_71_img = cv2.resize(
-                                temp, RESIZE, interpolation=cv2.INTER_CUBIC)
-                            # cv2.imwrite(save_path + model_path + "_damaged_lime_71.png", temp)
+                            # # Save the explanation as an image
+                            # lime_71_img = cv2.resize(
+                            #     temp, RESIZE, interpolation=cv2.INTER_CUBIC)
+                            # # cv2.imwrite(save_path + model_path + "_damaged_lime_71.png", temp)
 
                             images97 = [image97_resized[0],
-                                        grad_cam_97_img, lime_97_img]
+                                        grad_cam_97_img]
                             images71 = [image71_resized[0],
-                                        grad_cam_71_img, lime_71_img]
+                                        grad_cam_71_img]
 
                             # for image in images97:
                             #     print(np.array(image).shape)
@@ -748,14 +783,21 @@ def run_xai_evaluation_with_models():
                             print("image97_comb: ", type(
                                 image97_comb), image97_comb.shape)
 
+                            ### 97
                             cv2.imwrite(save_path + model_path +
-                                        "_damaged_97.png", image97_comb)
-                            # image97_comb.save(save_path + model_path + "_damaged_97.png")
+                                        f"_damaged_97_{pred_97}{model_type}.png", image97_comb)
 
+                            pd.DataFrame(grad_cam_97_hm)\
+                                .to_csv(save_path + model_path + f"_damaged_97_{pred_97}{model_type}.csv", index=False)
+
+                            ### 71
                             cv2.imwrite(save_path + model_path +
-                                        "_damaged_71.png", image71_comb)
-                            # image71_comb.save(save_path + model_path + "_damaged_71.png")
+                                        f"_damaged_71_{pred_71}{model_type}.png", image71_comb)
 
+                            pd.DataFrame(grad_cam_71_hm)\
+                                .to_csv(save_path + model_path + f"_damaged_71_{pred_71}{model_type}.csv", index=False)
+
+ 
                             # break
                         pass
                         # break
@@ -810,11 +852,19 @@ def deduct_results():
     data_imagenet = {}
     data_dagm = {}
 
-    last_cols = ["precision_train", "accuracy_train", "recall_train",
-                 "precision_test", "accuracy_test", "recall_test", "duration"]
-    best_cols = ["best_model_train_loss", "best_model_val_loss", "best_model_train_acc",
-                 "best_model_val_acc", "best_model_learning_rate", "best_model_nb_epoch"]
-    hist_cols = ["epoch", "loss", "accuracy", "val_loss", "val_accuracy"]
+    # last_cols = ["precision_train", "accuracy_train", "recall_train",
+    #              "precision_test", "accuracy_test", "recall_test", "duration"]
+    # best_cols = ["best_model_train_loss", "best_model_val_loss", "best_model_train_acc",
+    #              "best_model_val_acc", "best_model_learning_rate", "best_model_nb_epoch"]
+    # hist_cols = ["epoch", "loss", "accuracy", "val_loss", "val_accuracy"]
+
+    best_cols = ['best_model_train_loss', 'best_model_val_loss', 'best_model_train_acc',
+       'best_model_val_acc', 'best_model_learning_rate', 'best_model_nb_epoch']
+    last_cols = ['precision_train', 'accuracy_train', 'recall_train', 'precision_test',
+       'accuracy_test', 'recall_test', 'duration']
+    hist_cols = ['loss', 'accuracy', 'auc', 'true_negatives', 'true_positives', 'false_negatives', 
+        'false_positives', 'val_loss', 'val_accuracy', 'val_auc', 'val_true_negatives', 
+        'val_true_positives', 'val_false_negatives', 'val_false_positives']
 
     models_path = BASE_PATH + "results/experiments/models/"
 
@@ -828,6 +878,7 @@ def deduct_results():
     # print("best_data_df: " , best_data_df.columns)
     # print("last_data_df: " , last_data_df.columns)
     # print("hist_data_df: " , hist_data_df.columns)
+
     for iteration in range(iterations):
         for model in models:
             for s_dataset in source_datasets:
@@ -837,6 +888,7 @@ def deduct_results():
 
                         if k == 0:
                             continue
+
 
                         name = "it_" + str(iteration) + "_" + model + "_" + \
                             s_dataset + "_" + t_dataset + "_kshot_" + str(k)
@@ -852,34 +904,42 @@ def deduct_results():
                         identifier_dict[identifier_cols[3]] = t_dataset
                         identifier_dict[identifier_cols[4]] = k
 
+                        TESTING = False
+
                         if os.path.exists(best_file_name) == True:
                             best_df = pd.read_csv(best_file_name)
-
-                            best_dict = identifier_dict.copy()
-                            best_dict.update(best_df.iloc[0].to_dict())
-                            best_df = pd.DataFrame(best_dict, index=[0])
-                            best_data_df = pd.concat(
-                                [best_data_df, best_df], ignore_index=True)
+                            if TESTING:
+                                print("best: ", best_df.columns)
+                            if not TESTING:
+                                best_dict = identifier_dict.copy()
+                                best_dict.update(best_df.iloc[0].to_dict())
+                                best_df = pd.DataFrame(best_dict, index=[0])
+                                best_data_df = pd.concat(
+                                    [best_data_df, best_df], ignore_index=True)
 
                         if os.path.exists(last_file_name) == True:
                             last_df = pd.read_csv(last_file_name)
-
-                            last_dict = identifier_dict.copy()
-                            last_dict.update(last_df.iloc[0].to_dict())
-                            last_df = pd.DataFrame(last_dict, index=[0])
-                            last_data_df = pd.concat(
-                                [last_data_df, last_df], ignore_index=True)
+                            if TESTING:
+                                print("last: ", last_df.columns)
+                            if not TESTING:
+                                last_dict = identifier_dict.copy()
+                                last_dict.update(last_df.iloc[0].to_dict())
+                                last_df = pd.DataFrame(last_dict, index=[0])
+                                last_data_df = pd.concat(
+                                    [last_data_df, last_df], ignore_index=True)
 
                         if os.path.exists(hist_file_name) == True:
                             hist_df = pd.read_csv(hist_file_name)
-
-                            for index, row in hist_df.iterrows():
-                                hist_dict = identifier_dict.copy()
-                                hist_dict.update(row.to_dict())
-                                hist_dict.update({"epoch": index})
-                                hist_df = pd.DataFrame(hist_dict, index=[0])
-                                hist_data_df = pd.concat(
-                                    [hist_data_df, hist_df], ignore_index=True)
+                            if TESTING:
+                                print("hist: ", hist_df.columns)
+                            if not TESTING:
+                                for index, row in hist_df.iterrows():
+                                    hist_dict = identifier_dict.copy()
+                                    hist_dict.update(row.to_dict())
+                                    hist_dict.update({"epoch": index})
+                                    hist_df = pd.DataFrame(hist_dict, index=[0])
+                                    hist_data_df = pd.concat(
+                                        [hist_data_df, hist_df], ignore_index=True)
 
                         pass  # end of k-shot for loop
                     pass  # end of target dataset for loop
@@ -908,10 +968,10 @@ def test_some():
 
 if __name__ == '__main__':
     # run_train_premodels_with_sourcedata()
-    run_train_models_with_targetdata()
+    # run_train_models_with_targetdata(multi_gpu=False)
 
     # run_xai_evaluation_with_models()
 
-    # deduct_results()
+    deduct_results()
 
     # test_some()
