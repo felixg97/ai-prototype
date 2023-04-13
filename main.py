@@ -11,13 +11,8 @@ from PIL import Image
 import cv2
 import matplotlib.pyplot as plt
 import threading
+import time
 
-import shap
-import lime
-import lime.lime_image
-
-from skimage.io import imsave, imread
-from skimage.transform import resize
 
 from models.explainer.gradcam import GradCAM
 from utils.utils import load_img
@@ -46,7 +41,9 @@ BUILD_PREMODEL = True
 # Classification layer stuff
 BUILD_MODEL = True
 TARGET_ITERATIONS = 5  # TODO: Reset from TEST -> 2
-K_MAX = 51  # TODO: Reset from TEST -> 2
+K_MAX = 51  # TODO: Reset from TEST -> 2 # machine
+K_MAX = 31  # TODO: Reset from TEST -> 2 # low machine
+
 
 ############ Test stuff ############
 TESTING = False
@@ -149,6 +146,10 @@ def run_train_models_with_targetdata(multi_gpu=True):
     # allocate percentage of gpu memory
     config.gpu_options.per_process_gpu_memory_fraction = 0.8  # method 2
     # session
+    # config.gpu_options.visible_device_list = "1"
+    #
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    #
     session = tf.compat.v1.InteractiveSession(config=config)
 
     timestamp_string = time.gmtime(start)
@@ -364,6 +365,8 @@ def run_train_models_with_targetdata(multi_gpu=True):
 
                     gpu_devices = tf.config.list_physical_devices("GPU")
                     gpu_tracker = [gpu.name for gpu in gpu_devices]
+                    
+                    print(gpu_tracker)
 
                     iterations = list(reversed([i for i in range(
                         TARGET_ITERATIONS)]))
@@ -379,28 +382,34 @@ def run_train_models_with_targetdata(multi_gpu=True):
                             print(
                                 f"### Switching to iteration: {iteration} ###")
                             print("######################################")
+                            
+                            
 
                             # thread = threading.Thread(
                             #     target=parallel_func,
                             #     args=(gpu_devices, gpu_tracker)
                             # )
                             # thread.start()
+                            
+                            try:
 
-                            thread = threading.Thread(
-                                target=train_top_model_iteration,
-                                args=(
-                                    iteration,
-                                    weights_path,
-                                    pre_model_weights_path,
-                                    experiments_path,
-                                    premodel, source_dataset_name,
-                                    target_dataset_name,
-                                    target_num_classes,
-                                    gpu_devices,
-                                    gpu_tracker
+                                thread = threading.Thread(
+                                    target=train_top_model_iteration,
+                                    args=(
+                                        iteration,
+                                        weights_path,
+                                        pre_model_weights_path,
+                                        experiments_path,
+                                        premodel, source_dataset_name,
+                                        target_dataset_name,
+                                        target_num_classes,
+                                        gpu_devices,
+                                        gpu_tracker
+                                    )
                                 )
-                            )
-                            thread.start()
+                                thread.start()
+                            except Exception as e:
+                                print(e)
 
                 else:
                     for iteration in range(TARGET_ITERATIONS):
@@ -408,10 +417,65 @@ def run_train_models_with_targetdata(multi_gpu=True):
                         # # TODO: Parallelized @ this point -> Skip iteration 0
                         # if iteration == 0:
                         #     continue
+                        # if iteration == 1:
+                        #     continue
+                        
+                        # if premodel == "vgg16":
+                        #     continue
+                        # if premodel == "resnet101":
+                        #     if source_dataset_name == "imagenet":
+                        #         continue
+                        #     if iteration < 4:
+                        #         continue
+                        
+                        if premodel == "resnet101" \
+                            and source_dataset_name == "caltech101":
+                                pass
+                        elif premodel == "resnet101" \
+                            and source_dataset_name == "dagm" \
+                                and iteration == 3:
+                                    pass
+                        else:
+                            continue
+                                
+                                
+                        
+                        
+                        
+
 
                         # # TODO: Due to run <= 24 -> continue
                         # if iteration <= 3:
                         #     continue
+
+                        # if premodel == "vgg16" \
+                        #         and source_dataset_name == "imagenet":
+                        #     continue
+
+                        # if premodel == "resnet101" \
+                        #     and source_dataset_name == "caltech101" \
+                        #         and iteration == 4:
+                        #     pass
+                        # elif premodel == "vgg16" \
+                        #     and source_dataset_name == "imagenet" \
+                        #         and 2 <= iteration and iteration <= 4:
+                        #     pass
+                        # elif premodel == "vgg16" \
+                        #     and source_dataset_name == "imagenet" \
+                        #         and iteration == 0:
+                        #     pass
+                        # else:
+                        #     continue
+
+                        if premodel == "vgg16" \
+                            and source_dataset_name == "caltech101":
+                            pass
+                        elif premodel == "vgg16" \
+                            and source_dataset_name == "dagm":
+                            pass
+                        else:
+                            continue
+
 
                         print("######################################")
                         print(f"### Switching to iteration: {iteration} ###")
@@ -455,8 +519,8 @@ def run_train_models_with_targetdata(multi_gpu=True):
                             if k_shot == 0:
                                 continue
                             # # TODO: fix run
-                            if k_shot > 41:  # first run
-                                continue
+                            # if k_shot < 31:  # first run, adapted run from 41 to 31
+                            #     continue
                             if k_shot > 51:  # second run
                                 continue
                             print("######################################")
@@ -548,10 +612,46 @@ def run_pretrained_fullmodels_sophisticated_evaluation():
 def run_xai_evaluation_with_models():
 
     RESIZE = (275, 275)
+    
+    iterations = [
+        0,
+        1,
+        2,
+        3,
+        4,
+    ]
 
-    # Load images
+    k_shot = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25]
+
+    models = [
+        "vgg16",
+        "resnet101",
+        "densenet121"
+    ]
+
+    source_datasets = [
+        "imagenet",
+        "dagm",
+        "caltech101",
+    ]
+
+    target_datasets = [
+        "mechanicalseals_fulllight",
+    ]
+    
+    model_types = [
+        "_model_last",
+        "_model_best"
+    ]
+
+    base_path = BASE_PATH + "results/experiments/models/"
+    save_path = BASE_PATH + "results/xai/"
+
+
+    # Image paths
     image_path = BASE_PATH + "data/target/mechanicalseals_fulllight/"
     class_names = ["damaged", "undamaged"]  # as trained
+    
 
     # Image 97 - damaged
     image97 = load_img(image_path + "damaged/" +
@@ -569,39 +669,7 @@ def run_xai_evaluation_with_models():
     image16 = load_img(image_path + "undamaged/" +
                        "16.png", target_size=(224, 224))
 
-    iterations = [
-        0,
-        1,
-        2,
-        3,
-        4,
-    ]
-
-    k_shot = [1, 5, 10, 15, 20, 25]
-
-    models = [
-        "vgg16",
-        "resnet101",
-        "densenet121"
-    ]
-
-    model_types = [
-        "_model_last",
-        "_model_best"
-    ]
-
-    source_datasets = [
-        "imagenet",
-        "dagm",
-        "caltech101",
-    ]
-
-    target_datasets = [
-        "mechanicalseals_fulllight",
-    ]
-
-    base_path = BASE_PATH + "results/experiments/models/"
-    save_path = BASE_PATH + "results/xai/"
+ 
 
     for iteration in iterations:
         for model in models:
@@ -682,60 +750,12 @@ def run_xai_evaluation_with_models():
                                 RESIZE, Image.BICUBIC)
                             # grad_cam_71_img.save(save_path + model_path + "_damaged_gradcam_71.png")
 
-                            # LIME - Image 97
-                            explainer = lime.lime_image.LimeImageExplainer()
-
-                            explanation = explainer.explain_instance(image97_preprocessed[0],
-                                                                     tf_model.predict,
-                                                                     # hide_color=(128, 128, 128),
-                                                                     hide_color=(
-                                                                         0, 0, 0),
-                                                                     num_samples=5
-                                                                     )
-
-                            # Visualize the explanation
-                            temp, mask = explanation.get_image_and_mask(
-                                label=0,
-                                positive_only=False,
-                                negative_only=False,
-                                hide_rest=False,
-                                num_features=20
-                            )
-
-                            # Save the explanation as an image
-                            lime_97_img = cv2.resize(
-                                temp, RESIZE, interpolation=cv2.INTER_CUBIC)
-                            # cv2.imwrite(save_path + model_path + "_damaged_lime_97.png", temp)
-
-                            # LIME - Image 71
-                            explainer = lime.lime_image.LimeImageExplainer()
-
-                            explanation = explainer.explain_instance(image71_preprocessed[0],
-                                                                     tf_model.predict,
-                                                                     # hide_color=(128, 128, 128),
-                                                                     hide_color=(
-                                                                         0, 0, 0),
-                                                                     num_samples=5
-                                                                     )
-
-                            # Visualize the explanation
-                            temp, mask = explanation.get_image_and_mask(
-                                label=0,
-                                positive_only=False,
-                                negative_only=False,
-                                hide_rest=False,
-                                num_features=20
-                            )
-
-                            # Save the explanation as an image
-                            lime_71_img = cv2.resize(
-                                temp, RESIZE, interpolation=cv2.INTER_CUBIC)
-                            # cv2.imwrite(save_path + model_path + "_damaged_lime_71.png", temp)
+                            
 
                             images97 = [image97_resized[0],
-                                        grad_cam_97_img, lime_97_img]
+                                        grad_cam_97_img]
                             images71 = [image71_resized[0],
-                                        grad_cam_71_img, lime_71_img]
+                                        grad_cam_71_img]
 
                             # for image in images97:
                             #     print(np.array(image).shape)
@@ -748,14 +768,25 @@ def run_xai_evaluation_with_models():
                             print("image97_comb: ", type(
                                 image97_comb), image97_comb.shape)
 
+                            ### 97
                             cv2.imwrite(save_path + model_path +
-                                        "_damaged_97.png", image97_comb)
-                            # image97_comb.save(save_path + model_path + "_damaged_97.png")
-
+                                        f"_damaged_97_{pred_97}{model_type}.png", image97_comb)
+                                                        
+                            pd.DataFrame(grad_cam_97_hm)\
+                                .to_csv(save_path + model_path + f"_damaged_97_{pred_97}{model_type}.csv", index=False)
+                            
+                            ### 71
                             cv2.imwrite(save_path + model_path +
-                                        "_damaged_71.png", image71_comb)
-                            # image71_comb.save(save_path + model_path + "_damaged_71.png")
+                                        f"_damaged_71_{pred_71}{model_type}.png", image71_comb)
+                            
+                            pd.DataFrame(grad_cam_71_hm)\
+                                .to_csv(save_path + model_path + f"_damaged_71_{pred_71}{model_type}.csv", index=False)
 
+
+                            pd.DataFrame(grad_cam_71_hm)\
+                                .to_csv(save_path + model_path + f"_damaged_71_{pred_71}{model_type}.csv", index=False)
+
+ 
                             # break
                         pass
                         # break
@@ -769,6 +800,194 @@ def run_xai_evaluation_with_models():
         # break
     pass
 
+
+def run_xai_evaluation_redone():
+    RESIZE = (275, 275)
+    
+    iterations = [0, 1, 2, 3, 4]
+    k_shot = [5, 10]
+    models = ["vgg16", "resnet101"]
+    source_datasets = ["imagenet", "dagm", "caltech101"]
+    target_datasets = ["mechanicalseals_fulllight"]
+    model_types = ["_model_best"]
+    
+    base_path = BASE_PATH + "results/experiments/models/"
+    save_path = BASE_PATH + "results/xai2/"
+    
+    image_path = BASE_PATH + "data/target/mechanicalseals_fulllight/"
+    
+    # Image 97 - damaged
+    image97 = load_img(image_path + "damaged/" +
+                    "97.png", target_size=(224, 224))
+    image97_resized = load_img(
+        image_path + "damaged/" + "97.png", target_size=RESIZE)
+
+    # Image 71 - damaged
+    image71 = load_img(image_path + "damaged/" +
+                    "71.png", target_size=(224, 224))
+    image71_resized = load_img(
+        image_path + "damaged/" + "71.png", target_size=RESIZE)
+    
+    if os.path.exists(save_path) == False:
+        os.makedirs(save_path)
+        
+    ## suboptimal
+    def produce_grad_image(image, preprocessed_image, model):
+        print("IMAGE TYPE: ", image.shape, type(image))
+        
+        gradcam = GradCAM(model, 0)
+        heatmap = gradcam.compute_heatmap(
+            preprocessed_image)
+        res = gradcam.overlay_heatmap(
+            heatmap, image[0])
+        img = Image.fromarray(
+            res[1])
+        img = img.resize(
+            RESIZE, Image.BICUBIC)
+        return img
+    
+    # [0, 1] intact
+    # [1, 0] damaged
+    def return_label(encoded_label):
+        enc_label_np = encoded_label[0].numpy()
+        if enc_label_np[0]:
+            return "damaged"
+        elif enc_label_np[1]:
+            return "undamaged"
+        
+    def return_predicition_label(pred):
+        if pred == 0:
+            return "damaged"
+        elif pred == 1:
+            return "undamaged"
+    
+    for iteration in iterations:
+        
+        for model in models:
+            
+            preprocessing_func = None
+
+            if model == "vgg16":
+                preprocessing_func = tf.keras.applications.vgg16.preprocess_input
+            elif model == "resnet101":
+                preprocessing_func = tf.keras.applications.resnet.preprocess_input
+            elif model == "densenet121":
+                preprocessing_func = tf.keras.applications.densenet.preprocess_input
+            
+            
+            for s_dataset in source_datasets:
+                for t_dataset in target_datasets:
+                    for k in k_shot:
+                        
+                        model_path = "it_" + \
+                            str(iteration) + "_" + model + "_" + \
+                            s_dataset + "_" + t_dataset + "_kshot_" + str(k)
+                            
+                        path = base_path + model_path + "/"
+                        
+                        # print(path)
+                        
+                        # check if path exists
+                        if os.path.exists(path) == False:
+                            continue
+                        
+                        print("-----------------------")
+                        for model_type in model_types:
+                            print("..............")
+                        
+                            specific_save_path = save_path + f"it{iteration}_{model}_{s_dataset}_{t_dataset}_kshot_{k}/"
+                            
+                            if os.path.exists(specific_save_path) == False:
+                                os.makedirs(specific_save_path) 
+                        
+                            # check if path exsists
+                            modeltype_path = path + model_path + model_type + ".h5"
+                            
+                            if os.path.exists(modeltype_path) == False:
+                                continue
+                            
+                            tf_model = tf.keras.models.load_model(
+                                modeltype_path)
+                            
+                            #### do the specific stuff
+                            image97_preprocessed = preprocessing_func(image97)
+                            image71_preprocessed = preprocessing_func(image71)
+                            pred_97 = np.argmax(
+                                tf_model.predict(image97_preprocessed))
+                            pred_71 = np.argmax(
+                                tf_model.predict(image71_preprocessed))
+                            
+                            grad_cam97 = produce_grad_image(image97, image97_preprocessed, tf_model)
+                            grad_cam71 = produce_grad_image(image71, image71_preprocessed, tf_model)
+                            
+                            images97 = [image97_resized[0],
+                                        grad_cam97]
+                            images71 = [image71_resized[0],
+                                        grad_cam71]
+                            
+                            image97_comb = np.hstack(
+                                list(np.array(i) for i in images97))
+                            image71_comb = np.hstack(
+                                list(np.array(i) for i in images71))
+                            
+                            cv2.imwrite(specific_save_path + 
+                                f"97_damaged_pred_{return_predicition_label(pred_97)}{model_type}.png", image97_comb)
+                            cv2.imwrite(specific_save_path + 
+                                f"71_damaged_pred_{return_predicition_label(pred_71)}{model_type}.png", image71_comb)
+                            
+                            test_ds = load_local_dataset_tf(
+                                image_path,
+                                target_size=TARGET_SIZE,
+                                subset="test",
+                                seed=RANDOM_STATE+iteration,
+                                batch_size=1)
+                            
+                            test_size = int(test_ds.cardinality().numpy())
+                            test_set = test_ds.take(test_size)
+                        
+                            iterator = 0
+                            ### do the test set stuff
+                            for image, label in test_set:
+                                iterator += 1
+                                print(iterator)
+                                
+                                image_preprocessed = preprocessing_func(image)
+                                
+                                # Convert EagerTensor to NumPy array
+                                image_np = image[0].numpy()
+
+                                # Convert data type of NumPy array to uint8
+                                image_np = image_np.astype(np.uint8)
+
+                                # Create PIL Image object from NumPy array
+                                image_resized = Image.fromarray(image_np).resize(
+                                    RESIZE, Image.BICUBIC)
+                                image_resized = np.array(image_resized)
+                                
+                                pred = np.argmax(tf_model.predict(image_preprocessed))
+                                
+                                true_label = return_label(label)
+                                pred_label = return_predicition_label(pred)                                   
+                                
+                                print("-------------------")
+                                print("label: ", true_label)
+                                print("prediction: ", pred_label)
+                                
+                                grad_cam_img = produce_grad_image(image.numpy().astype(np.uint8), image_preprocessed, tf_model)
+                                
+                                images = [image_resized, grad_cam_img]
+                                images_comb = np.hstack(list(np.array(i) for i in images))
+                                
+                                cv2.imwrite(specific_save_path + f"iter{iterator}_{true_label}_pred_{pred_label}.png", images_comb)
+                                
+                                # return
+                        
+                        
+                
+            
+            
+        
+    pass
 
 def deduct_results():
 
@@ -810,16 +1029,26 @@ def deduct_results():
     data_imagenet = {}
     data_dagm = {}
 
-    last_cols = ["precision_train", "accuracy_train", "recall_train",
-                 "precision_test", "accuracy_test", "recall_test", "duration"]
-    best_cols = ["best_model_train_loss", "best_model_val_loss", "best_model_train_acc",
-                 "best_model_val_acc", "best_model_learning_rate", "best_model_nb_epoch"]
-    hist_cols = ["epoch", "loss", "accuracy", "val_loss", "val_accuracy"]
+    # last_cols = ["precision_train", "accuracy_train", "recall_train",
+    #              "precision_test", "accuracy_test", "recall_test", "duration"]
+    # best_cols = ["best_model_train_loss", "best_model_val_loss", "best_model_train_acc",
+    #              "best_model_val_acc", "best_model_learning_rate", "best_model_nb_epoch"]
+    # hist_cols = ["epoch", "loss", "accuracy", "val_loss", "val_accuracy"]
+
+    best_cols = ['best_model_train_loss', 'best_model_val_loss', 'best_model_train_acc',
+        'best_model_val_acc', 'best_model_learning_rate', 'best_model_nb_epoch']
+    last_cols = ['precision_train', 'accuracy_train', 'recall_train', 'precision_test',
+        'accuracy_test', 'recall_test', 'duration']
+    hist_cols = ['loss', 'accuracy', 'auc', 'true_negatives', 'true_positives',
+        'false_negatives', 'false_positives', 'val_loss', 'val_accuracy',
+        'val_auc', 'val_true_negatives', 'val_true_positives',
+        'val_false_negatives', 'val_false_positives']
+
 
     models_path = BASE_PATH + "results/experiments/models/"
 
     identifier_cols = ["iteration", "model",
-                       "source_dataset", "target_dataset", "k_shot"]
+                    "source_dataset", "target_dataset", "k_shot"]
 
     best_data_df = pd.DataFrame(columns=identifier_cols + best_cols)
     last_data_df = pd.DataFrame(columns=identifier_cols + last_cols)
@@ -828,6 +1057,7 @@ def deduct_results():
     # print("best_data_df: " , best_data_df.columns)
     # print("last_data_df: " , last_data_df.columns)
     # print("hist_data_df: " , hist_data_df.columns)
+
     for iteration in range(iterations):
         for model in models:
             for s_dataset in source_datasets:
@@ -837,6 +1067,7 @@ def deduct_results():
 
                         if k == 0:
                             continue
+
 
                         name = "it_" + str(iteration) + "_" + model + "_" + \
                             s_dataset + "_" + t_dataset + "_kshot_" + str(k)
@@ -851,35 +1082,45 @@ def deduct_results():
                         identifier_dict[identifier_cols[2]] = s_dataset
                         identifier_dict[identifier_cols[3]] = t_dataset
                         identifier_dict[identifier_cols[4]] = k
+                        
+                        TESTING = False
+
+                        TESTING = False
 
                         if os.path.exists(best_file_name) == True:
                             best_df = pd.read_csv(best_file_name)
-
-                            best_dict = identifier_dict.copy()
-                            best_dict.update(best_df.iloc[0].to_dict())
-                            best_df = pd.DataFrame(best_dict, index=[0])
-                            best_data_df = pd.concat(
-                                [best_data_df, best_df], ignore_index=True)
+                            if TESTING:
+                                print("best_df: ", best_df.columns)
+                            if not TESTING:
+                                best_dict = identifier_dict.copy()
+                                best_dict.update(best_df.iloc[0].to_dict())
+                                best_df = pd.DataFrame(best_dict, index=[0])
+                                best_data_df = pd.concat(
+                                    [best_data_df, best_df], ignore_index=True)
 
                         if os.path.exists(last_file_name) == True:
                             last_df = pd.read_csv(last_file_name)
-
-                            last_dict = identifier_dict.copy()
-                            last_dict.update(last_df.iloc[0].to_dict())
-                            last_df = pd.DataFrame(last_dict, index=[0])
-                            last_data_df = pd.concat(
-                                [last_data_df, last_df], ignore_index=True)
+                            if TESTING:
+                                print("last_df: ", last_df.columns)
+                            if not TESTING:
+                                last_dict = identifier_dict.copy()
+                                last_dict.update(last_df.iloc[0].to_dict())
+                                last_df = pd.DataFrame(last_dict, index=[0])
+                                last_data_df = pd.concat(
+                                    [last_data_df, last_df], ignore_index=True)
 
                         if os.path.exists(hist_file_name) == True:
                             hist_df = pd.read_csv(hist_file_name)
-
-                            for index, row in hist_df.iterrows():
-                                hist_dict = identifier_dict.copy()
-                                hist_dict.update(row.to_dict())
-                                hist_dict.update({"epoch": index})
-                                hist_df = pd.DataFrame(hist_dict, index=[0])
-                                hist_data_df = pd.concat(
-                                    [hist_data_df, hist_df], ignore_index=True)
+                            if TESTING:
+                                print("hist_df: ", hist_df.columns)
+                            if not TESTING:
+                                for index, row in hist_df.iterrows():
+                                    hist_dict = identifier_dict.copy()
+                                    hist_dict.update(row.to_dict())
+                                    hist_dict.update({"epoch": index})
+                                    hist_df = pd.DataFrame(hist_dict, index=[0])
+                                    hist_data_df = pd.concat(
+                                        [hist_data_df, hist_df], ignore_index=True)
 
                         pass  # end of k-shot for loop
                     pass  # end of target dataset for loop
@@ -908,10 +1149,11 @@ def test_some():
 
 if __name__ == '__main__':
     # run_train_premodels_with_sourcedata()
-    run_train_models_with_targetdata()
+    # run_train_models_with_targetdata(multi_gpu=False)
 
     # run_xai_evaluation_with_models()
+    run_xai_evaluation_redone()
 
-    # deduct_results()
+    deduct_results()
 
     # test_some()
